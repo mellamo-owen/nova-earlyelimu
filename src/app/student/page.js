@@ -69,10 +69,54 @@ export default function StudentDashboard() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
           <div>
             <h1 style={{ color: '#000000', fontSize: '1.8rem', fontWeight: 'bold' }}>Hi {studentData?.name}</h1>
-            <p style={{ color: '#10B981', fontWeight: 'bold', fontSize: '1.1rem' }}>{studentData?.student_id_code}</p>
+            <p style={{ color: '#10B981', fontWeight: 'bold', fontSize: '1.1rem' }}>{studentData?.student_id_code || 'ID Pending'}</p>
           </div>
           <button onClick={handleLogout} style={{ background: '#1E3A8A', color: 'white', padding: '0.6rem 1.2rem', borderRadius: '8px', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>Logout</button>
         </div>
+
+        {/* STUDENT ID CARD */}
+        {studentData?.status !== 'PENDING' && (
+          <div style={{ 
+            background: 'linear-gradient(135deg, #1E3A8A 0%, #000000 100%)', 
+            borderRadius: '16px', 
+            padding: '1.5rem', 
+            color: 'white',
+            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)',
+            position: 'relative',
+            overflow: 'hidden',
+            marginBottom: '2rem'
+          }}>
+            <div style={{ position: 'absolute', top: '-20px', right: '-20px', width: '100px', height: '100px', background: 'rgba(16,185,129,0.2)', borderRadius: '50%' }}></div>
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', position: 'relative', zIndex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div style={{ width: '30px', height: '30px', background: '#10B981', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', color: '#000' }}>N</div>
+                <span style={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Nova earlyElimu</span>
+              </div>
+              <span style={{ fontSize: '0.7rem', color: '#10B981', fontWeight: 'bold', letterSpacing: '1px' }}>STUDENT</span>
+            </div>
+
+            <div style={{ marginBottom: '1.5rem', position: 'relative', zIndex: 1 }}>
+              <p style={{ fontSize: '0.7rem', color: '#9CA3AF', textTransform: 'uppercase', marginBottom: '0.2rem' }}>Name</p>
+              <h2 style={{ fontSize: '1.4rem', fontWeight: 'bold', textTransform: 'capitalize' }}>{studentData.name}</h2>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', position: 'relative', zIndex: 1 }}>
+              <div>
+                <p style={{ fontSize: '0.7rem', color: '#9CA3AF', textTransform: 'uppercase', marginBottom: '0.2rem' }}>Student ID</p>
+                <p style={{ fontWeight: 'bold', color: '#10B981' }}>{studentData.student_id_code}</p>
+              </div>
+              <div>
+                <p style={{ fontSize: '0.7rem', color: '#9CA3AF', textTransform: 'uppercase', marginBottom: '0.2rem' }}>Age</p>
+                <p style={{ fontWeight: 'bold' }}>{studentData.age} Years</p>
+              </div>
+              <div style={{ gridColumn: '1 / -1' }}>
+                <p style={{ fontSize: '0.7rem', color: '#9CA3AF', textTransform: 'uppercase', marginBottom: '0.2rem' }}>Course</p>
+                <p style={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Fullstack Development</p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* WHAT YOU WILL ACHIEVE CARD */}
         <div style={{ background: '#1E3A8A', padding: '2rem', borderRadius: '16px', color: 'white', marginBottom: '2rem' }}>
@@ -117,10 +161,18 @@ export default function StudentDashboard() {
 
         <div style={{ background: '#000000', padding: '2rem', borderRadius: '16px', color: 'white', marginBottom: '2rem' }}>
           <p style={{ color: '#9CA3AF', fontSize: '0.9rem', marginBottom: '0.5rem', textTransform: 'uppercase' }}>Next Class</p>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
-            {lessons.length > 0 ? `Week ${lessons[0].week}: ${lessons[0].title}` : 'Waiting for teacher...'}
-          </h2>
-          <a href={lessons[0]?.meet_link || '#'} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', background: '#10B981', color: 'white', padding: '1rem 2rem', borderRadius: '8px', fontWeight: 'bold', fontSize: '1rem', textDecoration: 'none', marginTop: '1rem' }}>JOIN GOOGLE MEET</a>
+          {lessons.length > 0 ? (
+            <>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
+                Week {lessons[0].week}: {lessons[0].title}
+              </h2>
+              <a href={lessons[0].meet_link || '#'} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', background: '#10B981', color: 'white', padding: '1rem 2rem', borderRadius: '8px', fontWeight: 'bold', fontSize: '1rem', textDecoration: 'none', marginTop: '1rem' }}>
+                JOIN GOOGLE MEET
+              </a>
+            </>
+          ) : (
+            <p style={{ color: '#9CA3AF' }}>Your teacher will post the next class soon.</p>
+          )}
         </div>
 
         <div style={{ background: 'white', padding: '2rem', borderRadius: '16px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
@@ -137,7 +189,9 @@ export default function StudentDashboard() {
                   </div>
                   {isLocked ? <span style={{ fontSize: '0.9rem', color: '#6B7280', fontWeight: 'bold' }}>Locked</span> : (
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <a href={lesson.video_url || '#'} target="_blank" rel="noopener noreferrer" style={{ background: '#1E3A8A', color: 'white', padding: '0.5rem', borderRadius: '6px', fontWeight: 'bold', textDecoration: 'none', fontSize: '0.8rem' }}>Video</a>
+                      {lesson.video_url && (
+                        <a href={lesson.video_url} target="_blank" rel="noopener noreferrer" style={{ background: '#1E3A8A', color: 'white', padding: '0.5rem', borderRadius: '6px', fontWeight: 'bold', textDecoration: 'none', fontSize: '0.8rem' }}>Video</a>
+                      )}
                       {lesson.assignment_task && (
                         <button onClick={() => setActiveLesson(lesson)} style={{ background: '#10B981', color: 'white', padding: '0.5rem', borderRadius: '6px', fontWeight: 'bold', border: 'none', cursor: 'pointer', fontSize: '0.8rem' }}>Submit Work</button>
                       )}

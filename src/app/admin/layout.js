@@ -27,6 +27,7 @@ export default function AdminLayout({ children }) {
   const navItems = [
     { name: 'Dashboard', path: '/admin' },
     { name: 'Students', path: '/admin/students' },
+    { name: 'ID Cards', path: '/admin/id-cards' },
     { name: 'Payments', path: '/admin/payments' },
     { name: 'Lessons', path: '/admin/lessons' },
     { name: 'Grading', path: '/admin/grading' },
@@ -54,13 +55,11 @@ export default function AdminLayout({ children }) {
         {/* SIDEBAR */}
         <aside className={`sidebar ${isMobileMenuOpen ? 'open' : ''}`} style={{ width: '260px', background: '#1F2937', padding: '1.5rem', display: 'flex', flexDirection: 'column', borderRight: '1px solid #374151', flexShrink: 0 }}>
           
-          {/* LOGO (Desktop) */}
           <div className="desktop-logo" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '2.5rem' }}>
             <div style={{ width: '35px', height: '35px', background: '#10B981', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', color: '#000' }}>N</div>
             <span style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>Nova Admin</span>
           </div>
 
-          {/* NAVIGATION */}
           <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
             {navItems.map((item) => {
               const isActive = pathname === item.path;
@@ -78,7 +77,6 @@ export default function AdminLayout({ children }) {
             })}
           </nav>
 
-          {/* USER PROFILE */}
           <div style={{ borderTop: '1px solid #374151', paddingTop: '1rem', marginTop: 'auto' }}>
             <p style={{ fontSize: '0.8rem', color: '#9CA3AF', marginBottom: '0.5rem' }}>Logged in as</p>
             <p style={{ fontSize: '0.9rem', fontWeight: 'bold', marginBottom: '1rem', wordBreak: 'break-all' }}>{user?.email || 'Admin'}</p>
@@ -87,7 +85,6 @@ export default function AdminLayout({ children }) {
 
         </aside>
 
-        {/* MAIN CONTENT AREA */}
         <main style={{ flex: 1, padding: '2rem', overflowY: 'auto', width: '100%' }}>
           {children}
         </main>
