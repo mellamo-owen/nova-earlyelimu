@@ -19,20 +19,29 @@ export default function Login() {
     setError(null);
 
     try {
-      // 🔥 CRITICAL FIX: Wipe any existing session before trying to log in
+      // 1. Wipe any existing session completely
       await supabase.auth.signOut();
 
-      // 1. Try to log in
+      // 2. Sign in with Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password });
 
       if (authError) {
-        throw new Error(authError.message);
+        throw new Error("Auth Error: " + authError.message);
       }
 
-      // 2. Check if they are a parent/admin
-      const { data: parentProfile } = await supabase.from('parents').select('role').eq('id', authData.user.id).single();
+      console.log("Auth successful. User ID:", authData.user.id);
 
+      // 3. Check Parent Table
+      const { data: parentProfile, error: parentError } = await supabase
+        .from('parents')
+        .select('role')
+        .eq('id', authData.user.id)
+        .maybeSingle(); // Using maybeSingle so it doesn't crash if not found
+
+      if (parentError) console.log("Parent fetch error:", parentError);
+      
       if (parentProfile) {
+        console.log("Found in parents table. Role:", parentProfile.role);
         if (parentProfile.role === 'admin') {
           router.push('/admin');
         } else {
@@ -41,16 +50,24 @@ export default function Login() {
         return;
       }
 
-      // 3. Check if they are a student
-      const { data: studentProfile } = await supabase.from('students').select('id').eq('auth_user_id', authData.user.id).single();
+      // 4. Check Student Table (if not found in parents)
+      const { data: studentProfile, error: studentError } = await supabase
+        .from('students')
+        .select('id')
+        .eq('auth_user_id', authData.user.id)
+        .maybeSingle();
+
+      if (studentError) console.log("Student fetch error:", studentError);
 
       if (studentProfile) {
+        console.log("Found in students table.");
         router.push('/student');
       } else {
-        throw new Error('Account not found. Please contact support.');
+        throw new Error("Account found in Auth, but missing from both Parents and Students tables.");
       }
       
     } catch (err) {
+      console.error("Login failed:", err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -83,7 +100,7 @@ export default function Login() {
         <h1 style={{ fontSize: '1.8rem', marginBottom: '0.5rem', fontWeight: 'bold' }}>Welcome Back</h1>
         <p style={{ color: '#6B7280', marginBottom: '2rem' }}>Log in to your Nova earlyElimu account.</p>
 
-        {error && <div style={{ background: '#FEE2E2', color: '#B91C1C', padding: '1rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.9rem' }}>{error}</div>}
+        {error && <div style={{ background: '#FEE2E2', color: '#B91C1C', padding: '1rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.9rem', wordBreak: 'break-word' }}>{error}</div>}
         {resetSent && <div style={{ background: '#D1FAE5', color: '#065F46', padding: '1rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.9rem' }}>Password reset link sent! Check your email.</div>}
 
         <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
