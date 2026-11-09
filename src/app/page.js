@@ -1,69 +1,137 @@
-import Image from "next/image";
+﻿'use client';
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.js
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <main style={{
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #0A1931 0%, #1a2f4f 100%)',
+      color: '#FFFFFF',
+      display: 'flex',
+      flexDirection: 'column',
+    }}>
+      {/* NAVBAR */}
+      <nav style={{
+        padding: '1.5rem 2rem',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        borderBottom: '1px solid rgba(255,255,255,0.1)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{
+            width: '40px', height: '40px',
+            background: '#FF6B00',
+            borderRadius: '10px',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontWeight: 'bold', fontSize: '1.2rem', color: '#0A1931',
+          }}>N</div>
+          <span style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>
+            Nova earlyElimu
+          </span>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          <a href='/login' style={{
+            padding: '0.6rem 1.2rem',
+            border: '1px solid rgba(255,255,255,0.3)',
+            borderRadius: '8px',
+            fontSize: '0.9rem',
+          }}>Login</a>
+          <a href='/register' style={{
+            padding: '0.6rem 1.2rem',
+            background: '#FF6B00',
+            borderRadius: '8px',
+            fontWeight: '600',
+            fontSize: '0.9rem',
+            color: '#0A1931',
+          }}>Register</a>
         </div>
-      </main>
-    </div>
+      </nav>
+
+      {/* HERO */}
+      <section style={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        textAlign: 'center',
+        padding: '4rem 2rem',
+        maxWidth: '900px',
+        margin: '0 auto',
+      }}>
+        <div style={{
+          display: 'inline-block',
+          background: 'rgba(255,107,0,0.15)',
+          color: '#FF6B00',
+          padding: '0.4rem 1rem',
+          borderRadius: '20px',
+          fontSize: '0.85rem',
+          fontWeight: '600',
+          marginBottom: '1.5rem',
+          border: '1px solid rgba(255,107,0,0.3)',
+        }}>
+          🚀 Enrolling Now — Max 20 Kids Only
+        </div>
+
+        <h1 style={{
+          fontSize: 'clamp(2rem, 5vw, 3.5rem)',
+          fontWeight: '800',
+          lineHeight: '1.15',
+          marginBottom: '1.5rem',
+        }}>
+          Same Teacher. <span style={{ color: '#FF6B00' }}>Max 20 Kids.</span>
+          <br />
+          Real Fullstack Projects.
+        </h1>
+
+        <p style={{
+          fontSize: 'clamp(1rem, 2vw, 1.15rem)',
+          color: 'rgba(255,255,255,0.8)',
+          maxWidth: '600px',
+          marginBottom: '2.5rem',
+        }}>
+          Fullstack Development for Kids Age 8-12.
+          Learn HTML, CSS, JavaScript, GitHub & build real websites together.
+          Physical classes in Elburgon, Kenya — or join online.
+        </p>
+
+        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+          <a href='/register' style={{
+            padding: '1rem 2rem',
+            background: '#FF6B00',
+            color: '#0A1931',
+            borderRadius: '10px',
+            fontWeight: '700',
+            fontSize: '1rem',
+          }}>Register My Child</a>
+          <a href='https://wa.me/254700000000' style={{
+            padding: '1rem 2rem',
+            border: '2px solid rgba(255,255,255,0.3)',
+            borderRadius: '10px',
+            fontWeight: '600',
+            fontSize: '1rem',
+          }}>💬 WhatsApp Us</a>
+        </div>
+
+        <div style={{
+          marginTop: '3rem',
+          fontSize: '0.85rem',
+          color: 'rgba(255,255,255,0.6)',
+        }}>
+          Week 1 is FREE · Then KES 1,000 for Weeks 2-8
+        </div>
+      </section>
+
+      {/* FOOTER */}
+      <footer style={{
+        padding: '1.5rem 2rem',
+        textAlign: 'center',
+        borderTop: '1px solid rgba(255,255,255,0.1)',
+        fontSize: '0.85rem',
+        color: 'rgba(255,255,255,0.5)',
+      }}>
+        © 2026 Nova earlyElimu · Elburgon, Kenya · Teacher: Mickowen Khaseke
+      </footer>
+    </main>
   );
 }
