@@ -6,6 +6,7 @@ export default function AdminPayments() {
   const [payments, setPayments] = useState([]);
   const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [processingId, setProcessingId] = useState(null);
 
   useEffect(() => { 
     fetchPayments(); 
@@ -24,10 +25,23 @@ export default function AdminPayments() {
   };
 
   const approvePayment = async (paymentId, studentId) => {
-    await supabase.from('payments').update({ status: 'APPROVED' }).eq('id', paymentId);
-    await supabase.from('students').update({ status: 'APPROVED', payment_status: 'APPROVED' }).eq('id', studentId);
-    alert('Payment approved! Student unlocked.');
-    fetchPayments();
+    setProcessingId(paymentId);
+    
+    const { error: payError } = await supabase.from('payments').update({ status: 'APPROVED' }).eq('id', paymentId);
+    if (payError) {
+      alert('Error updating payment: ' + payError.message);
+      setProcessingId(null);
+      return;
+    }
+
+    const { error: studentError } = await supabase.from('students').update({ status: 'APPROVED', payment_status: 'APPROVED' }).eq('id', studentId);
+    if (studentError) {
+      alert('Error unlocking student: ' + studentError.message);
+    } else {
+      alert('Payment approved! Student unlocked.');
+      fetchPayments();
+    }
+    setProcessingId(null);
   };
 
   if (loading) return <div style={{ color: '#9CA3AF' }}>Loading...</div>;
@@ -37,7 +51,6 @@ export default function AdminPayments() {
       <h1 style={{ fontSize: '1.8rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>Payments</h1>
       <p style={{ color: '#9CA3AF', marginBottom: '2rem' }}>Verify the M-Pesa code and SMS text before approving.</p>
 
-      {/* PAYMENT DETAILS SUMMARY */}
       <div style={{ background: '#1F2937', padding: '1rem 1.5rem', borderRadius: '12px', border: '1px solid #374151', marginBottom: '2rem', display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
         <div>
           <p style={{ color: '#9CA3AF', fontSize: '0.8rem' }}>Paybill</p>
@@ -86,7 +99,13 @@ export default function AdminPayments() {
                 </td>
                 <td style={{ padding: '1rem' }}>
                   {payment.status === 'PENDING' ? (
-                    <button onClick={() => approvePayment(payment.id, payment.student_id)} style={{ background: '#10B981', color: '#000', padding: '0.5rem 1rem', borderRadius: '6px', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>Approve</button>
+                    <button 
+                      onClick={() => approvePayment(payment.id, payment.student_id)} 
+                      disabled={processingId === payment.id}
+                      style={{ background: '#10B981', color: '#000', padding: '0.5rem 1rem', borderRadius: '6px', fontWeight: 'bold', border: 'none', cursor: processingId === payment.id ? 'not-allowed' : 'pointer', opacity: processingId === payment.id ? 0.7 : 1 }}
+                    >
+                      {processingId === payment.id ? 'Approving...' : 'Approve'}
+                    </button>
                   ) : (
                     <span style={{ color: '#9CA3AF', fontSize: '0.9rem' }}>Approved</span>
                   )}

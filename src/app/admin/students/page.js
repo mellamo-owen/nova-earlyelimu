@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 export default function AdminStudents() {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [processingId, setProcessingId] = useState(null);
 
   useEffect(() => { fetchStudents(); }, []);
 
@@ -15,13 +16,21 @@ export default function AdminStudents() {
   };
 
   const approveStudent = async (id) => {
+    setProcessingId(id);
     const nextIdNum = students.length + 1;
     const studentCode = 'NEE-' + String(nextIdNum).padStart(3, '0');
-    await supabase.from('students').update({ status: 'WEEK1_FREE', student_id_code: studentCode }).eq('id', id);
-    fetchStudents();
+    
+    const { error } = await supabase.from('students').update({ status: 'WEEK1_FREE', student_id_code: studentCode }).eq('id', id);
+    
+    if (error) {
+      alert('Error approving student: ' + error.message);
+    } else {
+      fetchStudents();
+    }
+    setProcessingId(null);
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <div style={{ color: '#9CA3AF' }}>Loading...</div>;
 
   return (
     <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
@@ -54,7 +63,13 @@ export default function AdminStudents() {
                 </td>
                 <td style={{ padding: '1rem' }}>
                   {student.status === 'PENDING' ? (
-                    <button onClick={() => approveStudent(student.id)} style={{ background: '#10B981', color: 'white', padding: '0.5rem 1rem', borderRadius: '6px', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>Approve</button>
+                    <button 
+                      onClick={() => approveStudent(student.id)} 
+                      disabled={processingId === student.id}
+                      style={{ background: '#10B981', color: '#000', padding: '0.5rem 1rem', borderRadius: '6px', fontWeight: 'bold', border: 'none', cursor: processingId === student.id ? 'not-allowed' : 'pointer', opacity: processingId === student.id ? 0.7 : 1 }}
+                    >
+                      {processingId === student.id ? 'Approving...' : 'Approve'}
+                    </button>
                   ) : (
                     <span style={{ color: '#9CA3AF', fontSize: '0.9rem' }}>Approved</span>
                   )}
