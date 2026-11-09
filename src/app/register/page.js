@@ -66,11 +66,10 @@ export default function Register() {
       
       if (kidError) throw new Error('Kid registration failed: ' + kidError.message);
 
-      // 🔥 CRITICAL FIX: Sign out the kid so the parent can log in cleanly
-      await supabase.auth.signOut();
+      // NOTE: We removed the signOut() here so the parent stays logged in
 
-      alert('Registration successful! Please log in with your parent details.');
-      router.push('/outcomes');
+      alert('Registration successful! Welcome to your dashboard.');
+      router.push('/parent'); // <--- REDIRECT DIRECTLY TO PARENT DASHBOARD
 
     } catch (err) {
       setError(err.message);
