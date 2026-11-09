@@ -34,17 +34,33 @@ export default function Register() {
     }
 
     try {
+      // 1. Create Parent Auth
       const { data: parentAuth, error: parentAuthError } = await supabase.auth.signUp({ email: parentEmail, password: password });
-      if (parentAuthError) throw new Error('Parent Auth failed: ' + parentAuthError.message);
+      
+      if (parentAuthError) {
+        if (parentAuthError.message.includes('already registered')) {
+          throw new Error('This parent email is already registered. Please log in instead.');
+        }
+        throw new Error('Parent Auth failed: ' + parentAuthError.message);
+      }
 
-      const { error: parentError } = await supabase.from('parents').insert([{ 
+      // 2. Create Parent Profile
+      // Use upsert in case they are retrying after a failed kid registration
+      const { error: parentError } = await supabase.from('parents').upsert([{ 
         id: parentAuth.user.id, name: parentName, email: parentEmail, whatsapp: parentWhatsapp, role: 'parent'
       }]);
       if (parentError) throw new Error('Parent profile failed: ' + parentError.message);
 
+      // 3. Create Kid Auth
       const { data: kidAuth, error: kidAuthError } = await supabase.auth.signUp({ email: kidEmail, password: kidPassword });
-      if (kidAuthError) throw new Error('Kid Auth failed: ' + kidAuthError.message);
+      if (kidAuthError) {
+        if (kidAuthError.message.includes('already registered')) {
+          throw new Error('This Kid email is already registered. Please use a different email.');
+        }
+        throw new Error('Kid Auth failed: ' + kidAuthError.message);
+      }
 
+      // 4. Create Kid Profile
       const { error: kidError } = await supabase.from('students').insert([{
         parent_id: parentAuth.user.id, auth_user_id: kidAuth.user.id, name: kidName, age: ageNum, mode: kidMode, status: 'PENDING'
       }]);
