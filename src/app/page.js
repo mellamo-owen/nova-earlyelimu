@@ -1,10 +1,12 @@
 ﻿'use client';
 
+import Link from 'next/link';
+
 export default function Home() {
   return (
     <main style={{
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #0A1931 0%, #1a2f4f 100%)',
+      background: 'linear-gradient(135deg, #000000 0%, #1E3A8A 100%)',
       color: '#FFFFFF',
       display: 'flex',
       flexDirection: 'column',
@@ -20,30 +22,30 @@ export default function Home() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <div style={{
             width: '40px', height: '40px',
-            background: '#FF6B00',
+            background: '#10B981',
             borderRadius: '10px',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontWeight: 'bold', fontSize: '1.2rem', color: '#0A1931',
+            fontWeight: 'bold', fontSize: '1.2rem', color: '#000000',
           }}>N</div>
           <span style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>
             Nova earlyElimu
           </span>
         </div>
         <div style={{ display: 'flex', gap: '1rem' }}>
-          <a href='/login' style={{
+          <Link href='/login' style={{
             padding: '0.6rem 1.2rem',
             border: '1px solid rgba(255,255,255,0.3)',
             borderRadius: '8px',
             fontSize: '0.9rem',
-          }}>Login</a>
-          <a href='/register' style={{
+          }}>Login</Link>
+          <Link href='/register' style={{
             padding: '0.6rem 1.2rem',
-            background: '#FF6B00',
+            background: '#10B981',
             borderRadius: '8px',
             fontWeight: '600',
             fontSize: '0.9rem',
-            color: '#0A1931',
-          }}>Register</a>
+            color: '#FFFFFF',
+          }}>Register</Link>
         </div>
       </nav>
 
@@ -61,16 +63,16 @@ export default function Home() {
       }}>
         <div style={{
           display: 'inline-block',
-          background: 'rgba(255,107,0,0.15)',
-          color: '#FF6B00',
+          background: 'rgba(16,185,129,0.15)',
+          color: '#10B981',
           padding: '0.4rem 1rem',
           borderRadius: '20px',
           fontSize: '0.85rem',
           fontWeight: '600',
           marginBottom: '1.5rem',
-          border: '1px solid rgba(255,107,0,0.3)',
+          border: '1px solid rgba(16,185,129,0.3)',
         }}>
-          🚀 Enrolling Now — Max 20 Kids Only
+          Enrolling Now - Max 20 Kids Only
         </div>
 
         <h1 style={{
@@ -79,7 +81,7 @@ export default function Home() {
           lineHeight: '1.15',
           marginBottom: '1.5rem',
         }}>
-          Same Teacher. <span style={{ color: '#FF6B00' }}>Max 20 Kids.</span>
+          Same Teacher. <span style={{ color: '#10B981' }}>Max 20 Kids.</span>
           <br />
           Real Fullstack Projects.
         </h1>
@@ -96,21 +98,23 @@ export default function Home() {
         </p>
 
         <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
-          <a href='/register' style={{
+          <Link href='/register' style={{
             padding: '1rem 2rem',
-            background: '#FF6B00',
-            color: '#0A1931',
+            background: '#10B981',
+            color: '#FFFFFF',
             borderRadius: '10px',
             fontWeight: '700',
             fontSize: '1rem',
-          }}>Register My Child</a>
-          <a href='https://wa.me/254700000000' style={{
+          }}>Register My Child</Link>
+          
+          {/* UPDATED WHATSAPP LINK */}
+          <a href='https://wa.me/254723510672' target="_blank" rel="noopener noreferrer" style={{
             padding: '1rem 2rem',
             border: '2px solid rgba(255,255,255,0.3)',
             borderRadius: '10px',
             fontWeight: '600',
             fontSize: '1rem',
-          }}>💬 WhatsApp Us</a>
+          }}>WhatsApp Us</a>
         </div>
 
         <div style={{
