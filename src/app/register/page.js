@@ -45,7 +45,6 @@ export default function Register() {
       }
 
       // 2. Create Parent Profile
-      // Use upsert in case they are retrying after a failed kid registration
       const { error: parentError } = await supabase.from('parents').upsert([{ 
         id: parentAuth.user.id, name: parentName, email: parentEmail, whatsapp: parentWhatsapp, role: 'parent'
       }]);
@@ -67,7 +66,10 @@ export default function Register() {
       
       if (kidError) throw new Error('Kid registration failed: ' + kidError.message);
 
-      alert('Registration successful!');
+      // 🔥 CRITICAL FIX: Sign out the kid so the parent can log in cleanly
+      await supabase.auth.signOut();
+
+      alert('Registration successful! Please log in with your parent details.');
       router.push('/outcomes');
 
     } catch (err) {
@@ -82,7 +84,6 @@ export default function Register() {
       <div style={{ background: 'white', color: '#000000', padding: '2.5rem', borderRadius: '16px', width: '100%', maxWidth: '500px', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
         <h1 style={{ fontSize: '1.8rem', marginBottom: '0.5rem', fontWeight: 'bold' }}>Join Nova earlyElimu</h1>
         
-        {/* GUARANTEE NOTICE */}
         <div style={{ background: '#1E3A8A', color: 'white', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', fontSize: '0.9rem', textAlign: 'center' }}>
           <p style={{ fontWeight: 'bold', marginBottom: '0.3rem' }}>Strictly limited to 20 students per teacher.</p>
           <p style={{ color: '#10B981', fontWeight: 'bold' }}>The teacher who starts with your child stays with them to the very end.</p>
