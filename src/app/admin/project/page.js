@@ -2,10 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { useRouter } from 'next/navigation';
 
 export default function AdminProject() {
-  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [students, setStudents] = useState([]);
   
@@ -19,13 +17,17 @@ export default function AdminProject() {
   }, []);
 
   const fetchStudents = async () => {
-    // Fetch students who are either WEEK1_FREE or APPROVED (not PENDING)
-    const { data } = await supabase
+    // Fetch ALL students except those who are PENDING
+    const { data, error } = await supabase
       .from('students')
-      .select('*')
-      .in('status', ['WEEK1_FREE', 'APPROVED']);
+      .select('id, name, status, student_id_code')
+      .neq('status', 'PENDING'); // Gets WEEK1_FREE and APPROVED
       
-    if (data) setStudents(data);
+    if (error) {
+      console.error('Error fetching students:', error);
+    } else if (data) {
+      setStudents(data);
+    }
     setLoading(false);
   };
 
@@ -69,19 +71,20 @@ export default function AdminProject() {
               <option value="">-- Choose Student --</option>
               {students.map(s => (
                 <option key={s.id} value={s.id}>
-                  {s.name} ({s.student_id_code || s.status})
+                  {s.name} - {s.student_id_code || s.status}
                 </option>
               ))}
             </select>
+            
             {students.length === 0 && (
               <p style={{ color: '#F59E0B', fontSize: '0.8rem', marginTop: '0.5rem' }}>
-                Note: There are no approved students yet. Please approve a student in the Students tab first.
+                No active students found. Make sure you have approved a student in the Students tab.
               </p>
             )}
           </div>
 
           <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold', color: '#F3F4F6' }}>Project Part (e.g., Build the Header)</label>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold', color: '#F3F4F6' }}>Project Part</label>
             <input type="text" required value={partTitle} onChange={e => setPartTitle(e.target.value)} placeholder="e.g., Build the Home Page" style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: '1px solid #374151', background: '#111827', color: 'white' }} />
           </div>
 
