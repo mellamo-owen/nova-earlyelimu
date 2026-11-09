@@ -17,17 +17,39 @@ export default function AdminStudents() {
 
   const approveStudent = async (id) => {
     setProcessingId(id);
-    const nextIdNum = students.length + 1;
-    const studentCode = 'NEE-' + String(nextIdNum).padStart(3, '0');
     
-    const { error } = await supabase.from('students').update({ status: 'WEEK1_FREE', student_id_code: studentCode }).eq('id', id);
-    
-    if (error) {
-      alert('Error approving student: ' + error.message);
-    } else {
-      fetchStudents();
+    try {
+      // 1. Find how many students are ALREADY approved (have an ID code)
+      const approvedCount = students.filter(s => s.status !== 'PENDING' && s.student_id_code).length;
+      
+      // 2. Generate the next ID
+      const nextIdNum = approvedCount + 1;
+      const studentCode = 'NEE-' + String(nextIdNum).padStart(3, '0');
+      
+      // 3. Update the student
+      const { error } = await supabase
+        .from('students')
+        .update({ status: 'WEEK1_FREE', student_id_code: studentCode })
+        .eq('id', id);
+      
+      if (error) {
+        // If the ID is somehow taken, try a random one just in case
+        if (error.message.includes('unique constraint')) {
+          const randomId = 'NEE-' + Math.floor(100 + Math.random() * 900);
+          await supabase.from('students').update({ status: 'WEEK1_FREE', student_id_code: randomId }).eq('id', id);
+        } else {
+          throw new Error(error.message);
+        }
+      }
+      
+      // 4. Refresh the list
+      await fetchStudents();
+
+    } catch (err) {
+      alert('Error approving student: ' + err.message);
+    } finally {
+      setProcessingId(null);
     }
-    setProcessingId(null);
   };
 
   if (loading) return <div style={{ color: '#9CA3AF' }}>Loading...</div>;

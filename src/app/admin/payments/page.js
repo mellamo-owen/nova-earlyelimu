@@ -27,21 +27,23 @@ export default function AdminPayments() {
   const approvePayment = async (paymentId, studentId) => {
     setProcessingId(paymentId);
     
-    const { error: payError } = await supabase.from('payments').update({ status: 'APPROVED' }).eq('id', paymentId);
-    if (payError) {
-      alert('Error updating payment: ' + payError.message);
-      setProcessingId(null);
-      return;
-    }
+    try {
+      // 1. Update payment
+      const { error: payError } = await supabase.from('payments').update({ status: 'APPROVED' }).eq('id', paymentId);
+      if (payError) throw new Error(payError.message);
 
-    const { error: studentError } = await supabase.from('students').update({ status: 'APPROVED', payment_status: 'APPROVED' }).eq('id', studentId);
-    if (studentError) {
-      alert('Error unlocking student: ' + studentError.message);
-    } else {
+      // 2. Update student
+      const { error: studentError } = await supabase.from('students').update({ status: 'APPROVED', payment_status: 'APPROVED' }).eq('id', studentId);
+      if (studentError) throw new Error(studentError.message);
+
       alert('Payment approved! Student unlocked.');
-      fetchPayments();
+      await fetchPayments();
+
+    } catch (err) {
+      alert('Error approving payment: ' + err.message);
+    } finally {
+      setProcessingId(null);
     }
-    setProcessingId(null);
   };
 
   if (loading) return <div style={{ color: '#9CA3AF' }}>Loading...</div>;
