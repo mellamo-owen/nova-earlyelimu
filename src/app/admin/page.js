@@ -2,216 +2,122 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 
 export default function AdminDashboard() {
-  const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  const [students, setStudents] = useState([]);
-  const [payments, setPayments] = useState([]);
-  const [activeTab, setActiveTab] = useState('students');
-  
-  const [selectedStudent, setSelectedStudent] = useState(null);
-  const [score, setScore] = useState(3);
-  const [feedback, setFeedback] = useState('');
+  const [stats, setStats] = useState({ students: 0, pending: 0, revenue: 0 });
+  const [recentStudents, setRecentStudents] = useState([]);
 
   useEffect(() => {
-    checkAdmin();
-    fetchStudents();
-    fetchPayments();
+    fetchStats();
+    fetchRecentStudents();
   }, []);
 
-  const checkAdmin = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { router.push('/login'); return; }
-    const { data: profile } = await supabase.from('parents').select('role').eq('id', user.id).single();
-    if (profile?.role !== 'admin') { router.push('/login'); } else { setLoading(false); }
+  const fetchStats = async () => {
+    // Get total students
+    const { count: total } = await supabase.from('students').select('*', { count: 'exact', head: true });
+    
+    // Get pending approvals
+    const { count: pending } = await supabase.from('students').select('*', { count: 'exact', head: true }).eq('status', 'PENDING');
+    
+    // Get approved payments (Revenue calculation)
+    const { data: payments } = await supabase.from('payments').select('*').eq('status', 'APPROVED');
+    const revenue = payments ? payments.length * 1000 : 0; // Rough estimate based on KES 1,000 per payment
+
+    setStats({ students: total || 0, pending: pending || 0, revenue });
   };
 
-  const fetchStudents = async () => {
-    const { data } = await supabase.from('students').select('*, parents (name, email, whatsapp)').order('created_at', { ascending: false });
-    if (data) setStudents(data);
+  const fetchRecentStudents = async () => {
+    const { data } = await supabase.from('students').select('*, parents(name)').order('created_at', { ascending: false }).limit(5);
+    if (data) setRecentStudents(data);
   };
-
-  const fetchPayments = async () => {
-    const { data } = await supabase.from('payments').select('*, students(name, student_id_code)').order('created_at', { ascending: false });
-    if (data) setPayments(data);
-  };
-
-  const approveStudent = async (id) => {
-    const nextIdNum = students.length + 1;
-    const studentCode = 'NEE-' + String(nextIdNum).padStart(3, '0');
-    await supabase.from('students').update({ status: 'WEEK1_FREE', student_id_code: studentCode }).eq('id', id);
-    fetchStudents();
-  };
-
-  const approvePayment = async (paymentId, studentId) => {
-    await supabase.from('payments').update({ status: 'APPROVED' }).eq('id', paymentId);
-    await supabase.from('students').update({ status: 'APPROVED', payment_status: 'APPROVED' }).eq('id', studentId);
-    alert('Payment approved! Student is now unlocked for Weeks 2-8.');
-    fetchPayments();
-    fetchStudents();
-  };
-
-  const submitCallFeedback = async (e) => {
-    e.preventDefault();
-    if (!selectedStudent) return;
-    await supabase.from('calls').insert([{ student_id: selectedStudent.id, understanding_score: score, feedback: feedback }]);
-    alert('Feedback saved successfully!');
-    setSelectedStudent(null);
-    setFeedback('');
-  };
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push('/login');
-  };
-
-  if (loading) return <div style={{ padding: '2rem', color: '#000000', background: '#F9FAFB', minHeight: '100vh' }}>Loading Admin Data...</div>;
 
   return (
-    <main style={{ minHeight: '100vh', background: '#F9FAFB', padding: '2rem' }}>
-      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+    <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+      
+      {/* HEADER */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+        <div>
+          <h1 style={{ fontSize: '1.8rem', fontWeight: 'bold', marginBottom: '0.2rem' }}>Dashboard</h1>
+          <p style={{ color: '#9CA3AF', fontSize: '0.9rem' }}>Welcome back, Mickowen. Here is your daily overview.</p>
+        </div>
+      </div>
+
+      {/* TOP STATS GRID */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
         
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-          <div>
-            <h1 style={{ color: '#000000', fontSize: '2rem', fontWeight: 'bold' }}>Admin Dashboard</h1>
-            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem', flexWrap: 'wrap' }}>
-              <button onClick={() => setActiveTab('students')} style={{ background: activeTab === 'students' ? '#1E3A8A' : 'transparent', color: activeTab === 'students' ? 'white' : '#000000', padding: '0.5rem 1rem', borderRadius: '6px', fontWeight: 'bold', border: '1px solid #1E3A8A', cursor: 'pointer' }}>Students</button>
-              <button onClick={() => setActiveTab('payments')} style={{ background: activeTab === 'payments' ? '#1E3A8A' : 'transparent', color: activeTab === 'payments' ? 'white' : '#000000', padding: '0.5rem 1rem', borderRadius: '6px', fontWeight: 'bold', border: '1px solid #1E3A8A', cursor: 'pointer' }}>Payments</button>
-              <button onClick={() => setActiveTab('calls')} style={{ background: activeTab === 'calls' ? '#1E3A8A' : 'transparent', color: activeTab === 'calls' ? 'white' : '#000000', padding: '0.5rem 1rem', borderRadius: '6px', fontWeight: 'bold', border: '1px solid #1E3A8A', cursor: 'pointer' }}>1-on-1 Calls</button>
-              <Link href="/admin/lessons" style={{ background: '#10B981', color: 'white', padding: '0.5rem 1rem', borderRadius: '6px', fontWeight: 'bold', border: '1px solid #10B981', cursor: 'pointer', textDecoration: 'none' }}>Lessons</Link>
-              <Link href="/admin/grading" style={{ background: '#1E3A8A', color: 'white', padding: '0.5rem 1rem', borderRadius: '6px', fontWeight: 'bold', border: '1px solid #1E3A8A', cursor: 'pointer', textDecoration: 'none' }}>Grading</Link>
-              <Link href="/admin/announcements" style={{ background: '#1E3A8A', color: 'white', padding: '0.5rem 1rem', borderRadius: '6px', fontWeight: 'bold', border: '1px solid #1E3A8A', cursor: 'pointer', textDecoration: 'none' }}>Announcements</Link>
-              <Link href="/admin/project" style={{ background: '#1E3A8A', color: 'white', padding: '0.5rem 1rem', borderRadius: '6px', fontWeight: 'bold', border: '1px solid #1E3A8A', cursor: 'pointer', textDecoration: 'none' }}>Project Manager</Link>
-            </div>
-          </div>
-          <button onClick={handleLogout} style={{ background: '#000000', color: 'white', padding: '0.6rem 1.2rem', borderRadius: '8px', fontWeight: 'bold', border: 'none', cursor: 'pointer', height: 'fit-content' }}>Logout</button>
+        {/* TOTAL STUDENTS CARD (DARK GREEN) */}
+        <div style={{ background: '#064E3B', padding: '1.5rem', borderRadius: '16px', border: '1px solid #065F46' }}>
+          <p style={{ color: '#A7F3D0', fontSize: '0.9rem', marginBottom: '0.5rem' }}>Total Students</p>
+          <h2 style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#10B981' }}>{stats.students}</h2>
+          <p style={{ color: '#A7F3D0', fontSize: '0.8rem', marginTop: '0.5rem' }}>Enrolled in the program</p>
         </div>
 
-        {activeTab === 'students' && (
-          <div style={{ background: 'white', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-              <thead style={{ background: '#F9FAFB', color: '#6B7280', fontSize: '0.85rem', textTransform: 'uppercase' }}>
-                <tr>
-                  <th style={{ padding: '1rem' }}>Student</th>
-                  <th style={{ padding: '1rem' }}>Parent</th>
-                  <th style={{ padding: '1rem' }}>Status</th>
-                  <th style={{ padding: '1rem' }}>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {students.map((student) => (
-                  <tr key={student.id} style={{ borderBottom: '1px solid #eee' }}>
-                    <td style={{ padding: '1rem' }}>
-                      <p style={{ fontWeight: 'bold', color: '#000000' }}>{student.name} (Age {student.age})</p>
-                      <p style={{ fontSize: '0.8rem', color: '#6B7280' }}>ID: {student.student_id_code || 'Not Assigned'}</p>
-                    </td>
-                    <td style={{ padding: '1rem' }}>
-                      <p style={{ color: '#000000' }}>{student.parents?.name}</p>
-                      <p style={{ fontSize: '0.8rem', color: '#6B7280' }}>{student.parents?.whatsapp}</p>
-                    </td>
-                    <td style={{ padding: '1rem' }}>
-                      <span style={{ padding: '0.3rem 0.8rem', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 'bold', background: student.status === 'PENDING' ? '#FEF3C7' : '#D1FAE5', color: student.status === 'PENDING' ? '#D97706' : '#065F46' }}>
-                        {student.status}
-                      </span>
-                    </td>
-                    <td style={{ padding: '1rem' }}>
-                      {student.status === 'PENDING' ? (
-                        <button onClick={() => approveStudent(student.id)} style={{ background: '#10B981', color: 'white', padding: '0.5rem 1rem', borderRadius: '6px', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>Approve</button>
-                      ) : (
-                        <span style={{ color: '#6B7280', fontSize: '0.9rem' }}>Approved</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+        {/* PENDING CARD */}
+        <div style={{ background: '#1F2937', padding: '1.5rem', borderRadius: '16px', border: '1px solid #374151' }}>
+          <p style={{ color: '#9CA3AF', fontSize: '0.9rem', marginBottom: '0.5rem' }}>Pending Approvals</p>
+          <h2 style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#F59E0B' }}>{stats.pending}</h2>
+          <p style={{ color: '#9CA3AF', fontSize: '0.8rem', marginTop: '0.5rem' }}>Waiting for your review</p>
+        </div>
 
-        {activeTab === 'payments' && (
-          <div style={{ background: 'white', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-              <thead style={{ background: '#F9FAFB', color: '#6B7280', fontSize: '0.85rem', textTransform: 'uppercase' }}>
-                <tr>
-                  <th style={{ padding: '1rem' }}>Student</th>
-                  <th style={{ padding: '1rem' }}>M-Pesa Code</th>
-                  <th style={{ padding: '1rem' }}>SMS Details</th>
-                  <th style={{ padding: '1rem' }}>Status</th>
-                  <th style={{ padding: '1rem' }}>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {payments.map((payment) => (
-                  <tr key={payment.id} style={{ borderBottom: '1px solid #eee' }}>
-                    <td style={{ padding: '1rem' }}>
-                      <p style={{ fontWeight: 'bold', color: '#000000' }}>{payment.students?.name}</p>
-                      <p style={{ fontSize: '0.8rem', color: '#6B7280' }}>{payment.students?.student_id_code}</p>
-                    </td>
-                    <td style={{ padding: '1rem', fontWeight: 'bold', color: '#000000' }}>{payment.student_id_entered}</td>
-                    <td style={{ padding: '1rem', fontSize: '0.85rem', color: '#6B7280', maxWidth: '300px', whiteSpace: 'pre-wrap' }}>
-                      {payment.receipt_url || 'No SMS pasted'}
-                    </td>
-                    <td style={{ padding: '1rem' }}>
-                      <span style={{ padding: '0.3rem 0.8rem', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 'bold', background: payment.status === 'PENDING' ? '#FEF3C7' : '#D1FAE5', color: payment.status === 'PENDING' ? '#D97706' : '#065F46' }}>
-                        {payment.status}
-                      </span>
-                    </td>
-                    <td style={{ padding: '1rem' }}>
-                      {payment.status === 'PENDING' ? (
-                        <button onClick={() => approvePayment(payment.id, payment.student_id)} style={{ background: '#10B981', color: 'white', padding: '0.5rem 1rem', borderRadius: '6px', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>Approve</button>
-                      ) : (
-                        <span style={{ color: '#6B7280', fontSize: '0.9rem' }}>Approved</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+        {/* REVENUE CARD */}
+        <div style={{ background: '#1F2937', padding: '1.5rem', borderRadius: '16px', border: '1px solid #374151' }}>
+          <p style={{ color: '#9CA3AF', fontSize: '0.9rem', marginBottom: '0.5rem' }}>Est. Revenue</p>
+          <h2 style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#F3F4F6' }}>KES {stats.revenue.toLocaleString()}</h2>
+          <p style={{ color: '#9CA3AF', fontSize: '0.8rem', marginTop: '0.5rem' }}>Based on approved payments</p>
+        </div>
 
-        {activeTab === 'calls' && (
-          <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
-            <div style={{ flex: 1, minWidth: '300px', background: 'white', padding: '1.5rem', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
-              <h2 style={{ color: '#000000', fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '1rem' }}>Call Queue</h2>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                {students.filter(s => s.status !== 'PENDING' && s.status !== 'WAITLIST').map(student => (
-                  <div key={student.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#F9FAFB', padding: '1rem', borderRadius: '8px', border: '1px solid #E5E7EB' }}>
-                    <div>
-                      <p style={{ fontWeight: 'bold', color: '#000000' }}>{student.name}</p>
-                      <p style={{ fontSize: '0.8rem', color: '#6B7280' }}>{student.student_id_code}</p>
-                    </div>
-                    <button onClick={() => setSelectedStudent(student)} style={{ background: '#10B981', color: 'white', padding: '0.5rem 1rem', borderRadius: '6px', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>Start Call</button>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div style={{ flex: 1, minWidth: '300px', background: 'white', padding: '1.5rem', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
-              <h2 style={{ color: '#000000', fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '1rem' }}>Call Feedback</h2>
-              {selectedStudent ? (
-                <form onSubmit={submitCallFeedback} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  <p style={{ color: '#6B7280', fontSize: '0.9rem' }}>Writing feedback for: <strong>{selectedStudent.name}</strong></p>
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold', color: '#000000' }}>Understanding Score (1-5)</label>
-                    <input type="number" min="1" max="5" value={score} onChange={(e) => setScore(e.target.value)} style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: '1px solid #ccc', color: 'black' }} />
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold', color: '#000000' }}>Feedback Notes</label>
-                    <textarea rows="4" value={feedback} onChange={(e) => setFeedback(e.target.value)} placeholder="What did the student understand?" style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: '1px solid #ccc', color: 'black' }}></textarea>
-                  </div>
-                  <button type="submit" style={{ background: '#1E3A8A', color: 'white', padding: '0.8rem', borderRadius: '8px', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>Save Feedback</button>
-                </form>
-              ) : (
-                <p style={{ color: '#6B7280', fontSize: '0.9rem' }}>Click "Start Call" on a student to write feedback after the session.</p>
-              )}
-            </div>
-          </div>
-        )}
       </div>
-    </main>
+
+      {/* BOTTOM SECTION GRID */}
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.5rem' }}>
+        
+        {/* RECENT STUDENTS LIST */}
+        <div style={{ background: '#1F2937', padding: '1.5rem', borderRadius: '16px', border: '1px solid #374151' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+            <h2 style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>Recent Registrations</h2>
+            <span style={{ fontSize: '0.8rem', color: '#10B981', cursor: 'pointer' }}>View All</span>
+          </div>
+          
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+            <thead>
+              <tr style={{ color: '#9CA3AF', fontSize: '0.85rem', borderBottom: '1px solid #374151' }}>
+                <th style={{ paddingBottom: '1rem' }}>Student Name</th>
+                <th style={{ paddingBottom: '1rem' }}>Parent</th>
+                <th style={{ paddingBottom: '1rem' }}>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {recentStudents.map((student) => (
+                <tr key={student.id} style={{ borderBottom: '1px solid #374151' }}>
+                  <td style={{ padding: '1rem 0', fontWeight: 'bold' }}>{student.name}</td>
+                  <td style={{ padding: '1rem 0', color: '#9CA3AF' }}>{student.parents?.name}</td>
+                  <td style={{ padding: '1rem 0' }}>
+                    <span style={{ background: student.status === 'PENDING' ? 'rgba(245,158,11,0.2)' : 'rgba(16,185,129,0.2)', color: student.status === 'PENDING' ? '#F59E0B' : '#10B981', padding: '0.3rem 0.8rem', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 'bold' }}>
+                      {student.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* QUICK ACTIONS CARD */}
+        <div style={{ background: '#064E3B', padding: '1.5rem', borderRadius: '16px', border: '1px solid #065F46' }}>
+          <h2 style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#10B981', marginBottom: '1rem' }}>Quick Actions</h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div style={{ background: 'rgba(255,255,255,0.05)', padding: '1rem', borderRadius: '12px', cursor: 'pointer', border: '1px solid rgba(255,255,255,0.1)' }}>
+              <p style={{ fontWeight: 'bold', color: '#F3F4F6' }}>Approve Payments</p>
+              <p style={{ fontSize: '0.8rem', color: '#A7F3D0' }}>Review M-Pesa codes</p>
+            </div>
+            <div style={{ background: 'rgba(255,255,255,0.05)', padding: '1rem', borderRadius: '12px', cursor: 'pointer', border: '1px solid rgba(255,255,255,0.1)' }}>
+              <p style={{ fontWeight: 'bold', color: '#F3F4F6' }}>Post Announcement</p>
+              <p style={{ fontSize: '0.8rem', color: '#A7F3D0' }}>Notify parents & students</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
   );
 }
