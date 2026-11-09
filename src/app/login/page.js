@@ -18,31 +18,43 @@ export default function Login() {
     setLoading(true);
     setError(null);
 
-    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password });
+    try {
+      // 🔥 CRITICAL FIX: Wipe any existing session before trying to log in
+      await supabase.auth.signOut();
 
-    if (authError) {
-      setError(authError.message);
+      // 1. Try to log in
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password });
+
+      if (authError) {
+        throw new Error(authError.message);
+      }
+
+      // 2. Check if they are a parent/admin
+      const { data: parentProfile } = await supabase.from('parents').select('role').eq('id', authData.user.id).single();
+
+      if (parentProfile) {
+        if (parentProfile.role === 'admin') {
+          router.push('/admin');
+        } else {
+          router.push('/parent');
+        }
+        return;
+      }
+
+      // 3. Check if they are a student
+      const { data: studentProfile } = await supabase.from('students').select('id').eq('auth_user_id', authData.user.id).single();
+
+      if (studentProfile) {
+        router.push('/student');
+      } else {
+        throw new Error('Account not found. Please contact support.');
+      }
+      
+    } catch (err) {
+      setError(err.message);
+    } finally {
       setLoading(false);
-      return;
     }
-
-    const { data: parentProfile } = await supabase.from('parents').select('role').eq('id', authData.user.id).single();
-
-    if (parentProfile) {
-      if (parentProfile.role === 'admin') router.push('/admin');
-      else router.push('/parent');
-      return;
-    }
-
-    const { data: studentProfile } = await supabase.from('students').select('id').eq('auth_user_id', authData.user.id).single();
-
-    if (studentProfile) {
-      router.push('/student');
-    } else {
-      setError('Account not found. Please contact support.');
-    }
-    
-    setLoading(false);
   };
 
   const handleForgotPassword = async () => {
@@ -54,7 +66,7 @@ export default function Login() {
     setError(null);
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: 'http://localhost:3000/login', // When deployed, change this to your Vercel URL
+      redirectTo: window.location.origin + '/reset-password',
     });
 
     if (error) {
@@ -84,7 +96,7 @@ export default function Login() {
             </button>
           </div>
 
-          <button type='submit' disabled={loading} style={{ background: '#10B981', color: '#FFFFFF', padding: '1rem', borderRadius: '8px', fontWeight: 'bold', fontSize: '1rem', border: 'none', cursor: 'pointer' }}>
+          <button type='submit' disabled={loading} style={{ background: '#10B981', color: '#FFFFFF', padding: '1rem', borderRadius: '8px', fontWeight: 'bold', fontSize: '1rem', border: 'none', cursor: loading ? 'not-allowed' : 'pointer' }}>
             {loading ? 'Processing...' : 'Log In'}
           </button>
         </form>
