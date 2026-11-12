@@ -27,32 +27,25 @@ export default function AdminLayout({ children }) {
   const navItems = [
     { name: 'Dashboard', path: '/admin' },
     { name: 'Students', path: '/admin/students' },
+    { name: 'Tutors', path: '/admin/tutors' }, // <--- ADDED TUTORS HERE
     { name: 'ID Cards', path: '/admin/id-cards' },
     { name: 'Payments', path: '/admin/payments' },
-    { name: 'Lessons', path: '/admin/lessons' },
-    { name: 'Grading', path: '/admin/grading' },
-    { name: 'Calls', path: '/admin/calls' },
     { name: 'Announcements', path: '/admin/announcements' },
-    { name: 'Project', path: '/admin/project' },
   ];
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#111827', color: '#F3F4F6', fontFamily: 'sans-serif', flexDirection: 'column' }}>
       
-      {/* MOBILE HEADER */}
       <div className="mobile-header" style={{ display: 'none', background: '#1F2937', padding: '1rem', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #374151' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <div style={{ width: '30px', height: '30px', background: '#10B981', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', color: '#000' }}>N</div>
           <span style={{ fontWeight: 'bold', fontSize: '1rem' }}>Nova Admin</span>
         </div>
-        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} style={{ background: 'transparent', border: 'none', color: 'white', fontSize: '1.5rem', cursor: 'pointer' }}>
-          ☰
-        </button>
+        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} style={{ background: 'transparent', border: 'none', color: 'white', fontSize: '1.5rem', cursor: 'pointer' }}>☰</button>
       </div>
 
       <div style={{ display: 'flex', flex: 1, flexDirection: 'row' }}>
         
-        {/* SIDEBAR */}
         <aside className={`sidebar ${isMobileMenuOpen ? 'open' : ''}`} style={{ width: '260px', background: '#1F2937', padding: '1.5rem', display: 'flex', flexDirection: 'column', borderRight: '1px solid #374151', flexShrink: 0 }}>
           
           <div className="desktop-logo" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '2.5rem' }}>
@@ -64,13 +57,7 @@ export default function AdminLayout({ children }) {
             {navItems.map((item) => {
               const isActive = pathname === item.path;
               return (
-                <Link key={item.name} href={item.path} onClick={() => setIsMobileMenuOpen(false)} style={{
-                  display: 'flex', alignItems: 'center', padding: '0.75rem 1rem', borderRadius: '8px',
-                  background: isActive ? '#10B981' : 'transparent',
-                  color: isActive ? '#000000' : '#9CA3AF',
-                  fontWeight: isActive ? 'bold' : 'normal',
-                  textDecoration: 'none', transition: 'all 0.2s'
-                }}>
+                <Link key={item.name} href={item.path} onClick={() => setIsMobileMenuOpen(false)} style={{ display: 'flex', alignItems: 'center', padding: '0.75rem 1rem', borderRadius: '8px', background: isActive ? '#10B981' : 'transparent', color: isActive ? '#000000' : '#9CA3AF', fontWeight: isActive ? 'bold' : 'normal', textDecoration: 'none', transition: 'all 0.2s' }}>
                   {item.name}
                 </Link>
               );
@@ -94,16 +81,7 @@ export default function AdminLayout({ children }) {
       <style jsx global>{`
         @media (max-width: 768px) {
           .mobile-header { display: flex !important; }
-          .sidebar { 
-            display: none !important; 
-            position: absolute; 
-            top: 60px; 
-            left: 0; 
-            right: 0; 
-            width: 100%; 
-            z-index: 50;
-            height: calc(100vh - 60px);
-          }
+          .sidebar { display: none !important; position: absolute; top: 60px; left: 0; right: 0; width: 100%; z-index: 50; height: calc(100vh - 60px); }
           .sidebar.open { display: flex !important; }
           .desktop-logo { display: none !important; }
           main { padding: 1rem !important; }
