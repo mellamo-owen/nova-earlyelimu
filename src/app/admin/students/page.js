@@ -10,7 +10,11 @@ export default function AdminStudents() {
   useEffect(() => { fetchStudents(); }, []);
 
   const fetchStudents = async () => {
-    const { data } = await supabase.from('students').select('*, parents (name, email, whatsapp)').order('created_at', { ascending: false });
+    const { data } = await supabase
+      .from('students')
+      .select('*, parents (name, email, whatsapp)')
+      .order('created_at', { ascending: false });
+      
     if (data) setStudents(data);
     setLoading(false);
   };
@@ -19,21 +23,17 @@ export default function AdminStudents() {
     setProcessingId(id);
     
     try {
-      // 1. Find how many students are ALREADY approved (have an ID code)
+      // Find how many students are already approved
       const approvedCount = students.filter(s => s.status !== 'PENDING' && s.student_id_code).length;
-      
-      // 2. Generate the next ID
       const nextIdNum = approvedCount + 1;
       const studentCode = 'NEE-' + String(nextIdNum).padStart(3, '0');
       
-      // 3. Update the student
       const { error } = await supabase
         .from('students')
         .update({ status: 'WEEK1_FREE', student_id_code: studentCode })
         .eq('id', id);
       
       if (error) {
-        // If the ID is somehow taken, try a random one just in case
         if (error.message.includes('unique constraint')) {
           const randomId = 'NEE-' + Math.floor(100 + Math.random() * 900);
           await supabase.from('students').update({ status: 'WEEK1_FREE', student_id_code: randomId }).eq('id', id);
@@ -42,7 +42,6 @@ export default function AdminStudents() {
         }
       }
       
-      // 4. Refresh the list
       await fetchStudents();
 
     } catch (err) {
@@ -58,11 +57,11 @@ export default function AdminStudents() {
     <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
       <h1 style={{ fontSize: '1.8rem', fontWeight: 'bold', marginBottom: '2rem' }}>Students</h1>
       <div style={{ background: '#1F2937', borderRadius: '12px', overflowX: 'auto', border: '1px solid #374151' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '600px' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '800px' }}>
           <thead style={{ background: '#111827', color: '#9CA3AF', fontSize: '0.85rem', textTransform: 'uppercase' }}>
             <tr>
               <th style={{ padding: '1rem' }}>Student</th>
-              <th style={{ padding: '1rem' }}>Parent</th>
+              <th style={{ padding: '1rem' }}>Parent Email</th>
               <th style={{ padding: '1rem' }}>Status</th>
               <th style={{ padding: '1rem' }}>Action</th>
             </tr>
@@ -75,8 +74,8 @@ export default function AdminStudents() {
                   <p style={{ fontSize: '0.8rem', color: '#9CA3AF' }}>ID: {student.student_id_code || 'Not Assigned'}</p>
                 </td>
                 <td style={{ padding: '1rem' }}>
-                  <p>{student.parents?.name}</p>
-                  <p style={{ fontSize: '0.8rem', color: '#9CA3AF' }}>{student.parents?.whatsapp}</p>
+                  <p style={{ color: '#10B981', fontWeight: 'bold' }}>{student.parents?.email}</p>
+                  <p style={{ fontSize: '0.8rem', color: '#9CA3AF' }}>Parent: {student.parents?.name}</p>
                 </td>
                 <td style={{ padding: '1rem' }}>
                   <span style={{ padding: '0.3rem 0.8rem', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 'bold', background: student.status === 'PENDING' ? 'rgba(245,158,11,0.2)' : 'rgba(16,185,129,0.2)', color: student.status === 'PENDING' ? '#F59E0B' : '#10B981' }}>
