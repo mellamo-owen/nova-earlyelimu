@@ -10,7 +10,6 @@ export default function TutorLayout({ children }) {
   const pathname = usePathname();
   const [tutor, setTutor] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [newPassword, setNewPassword] = useState('');
   const [passwordMessage, setPasswordMessage] = useState('');
@@ -46,29 +45,35 @@ export default function TutorLayout({ children }) {
     { name: 'Dashboard', path: '/tutor' },
     { name: 'Schedule Class', path: '/tutor/schedule' },
     { name: 'Class Group Chat', path: '/tutor/group' },
-    { name: 'Parent Messages', path: '/tutor/parent-chat' }, // <--- NEW TAB
+    { name: 'Parent Messages', path: '/tutor/parent-chat' },
     { name: 'Assignments & Grading', path: '/tutor/grading' },
     { name: '1-on-1 Calls', path: '/tutor/calls' },
     { name: 'Group Projects', path: '/tutor/projects' },
   ];
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#0F172A', color: '#F8FAFC', fontFamily: 'sans-serif', flexDirection: 'column' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', background: '#111827', color: '#F8FAFC', fontFamily: 'sans-serif', flexDirection: 'column' }}>
       
-      <div style={{ display: 'none', background: '#1E293B', padding: '1rem', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #334155' }} className="mobile-header-tutor">
+      <div style={{ display: 'none', background: '#1F2937', padding: '1rem', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #374151' }} className="mobile-header-tutor">
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <div style={{ width: '30px', height: '30px', background: '#3B82F6', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>S</div>
+          <div style={{ width: '30px', height: '30px', background: '#1E3A8A', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', color: 'white' }}>S</div>
           <span style={{ fontWeight: 'bold', fontSize: '1rem' }}>Smart Tutor</span>
         </div>
-        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} style={{ background: 'transparent', border: 'none', color: 'white', fontSize: '1.5rem', cursor: 'pointer' }}></button>
+        
+        {/* CSS HAMBURGER MENU */}
+        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '0.5rem', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <div style={{ width: '25px', height: '3px', background: 'white', borderRadius: '2px' }}></div>
+          <div style={{ width: '25px', height: '3px', background: 'white', borderRadius: '2px' }}></div>
+          <div style={{ width: '25px', height: '3px', background: 'white', borderRadius: '2px' }}></div>
+        </button>
       </div>
 
       <div style={{ display: 'flex', flex: 1, flexDirection: 'row' }}>
         
-        <aside className={`sidebar-tutor ${isMobileMenuOpen ? 'open' : ''}`} style={{ width: '260px', background: '#1E293B', padding: '1.5rem', display: 'flex', flexDirection: 'column', borderRight: '1px solid #334155', flexShrink: 0 }}>
+        <aside className={`sidebar-tutor ${isMobileMenuOpen ? 'open' : ''}`} style={{ width: '260px', background: '#1F2937', padding: '1.5rem', display: 'flex', flexDirection: 'column', borderRight: '1px solid #374151', flexShrink: 0 }}>
           
           <div className="desktop-logo-tutor" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '3rem' }}>
-            <div style={{ width: '35px', height: '35px', background: '#3B82F6', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>S</div>
+            <div style={{ width: '35px', height: '35px', background: '#1E3A8A', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', color: 'white' }}>S</div>
             <span style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>Smart Tutor</span>
           </div>
 
@@ -78,8 +83,8 @@ export default function TutorLayout({ children }) {
               return (
                 <Link key={item.name} href={item.path} onClick={() => setIsMobileMenuOpen(false)} style={{ 
                   display: 'flex', alignItems: 'center', padding: '0.75rem 1rem', 
-                  background: isActive ? '#334155' : 'transparent', 
-                  borderRadius: '8px', color: isActive ? 'white' : '#94A3B8', 
+                  background: isActive ? '#1E3A8A' : 'transparent', 
+                  borderRadius: '8px', color: isActive ? 'white' : '#9CA3AF', 
                   textDecoration: 'none', fontWeight: isActive ? 'bold' : 'normal', transition: 'all 0.2s'
                 }}>
                   {item.name}
@@ -88,19 +93,19 @@ export default function TutorLayout({ children }) {
             })}
           </nav>
 
-          <div style={{ borderTop: '1px solid #334155', paddingTop: '1rem', marginTop: 'auto' }}>
-            <button onClick={() => setShowPasswordForm(!showPasswordForm)} style={{ width: '100%', background: 'transparent', border: '1px solid #334155', color: '#3B82F6', padding: '0.75rem', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', marginBottom: '0.5rem' }}>Change Password</button>
+          <div style={{ borderTop: '1px solid #374151', paddingTop: '1rem', marginTop: 'auto' }}>
+            <button onClick={() => setShowPasswordForm(!showPasswordForm)} style={{ width: '100%', background: 'transparent', border: '1px solid #374151', color: '#3B82F6', padding: '0.75rem', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', marginBottom: '0.5rem' }}>Change Password</button>
             <button onClick={handleLogout} style={{ width: '100%', background: 'transparent', border: 'none', color: '#EF4444', padding: '0.75rem', fontWeight: 'bold', cursor: 'pointer', textAlign: 'center' }}>Log Out</button>
           </div>
         </aside>
 
         <main style={{ flex: 1, padding: '2rem', overflowY: 'auto', width: '100%' }}>
           {showPasswordForm && (
-            <div style={{ background: '#1E293B', padding: '1.5rem', borderRadius: '16px', border: '1px solid #334155', marginBottom: '2rem' }}>
+            <div style={{ background: '#1F2937', padding: '1.5rem', borderRadius: '16px', border: '1px solid #374151', marginBottom: '2rem' }}>
               <h2 style={{ fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '1rem', color: '#3B82F6' }}>Update Your Password</h2>
               {passwordMessage && <p style={{ marginBottom: '1rem', color: passwordMessage.includes('Error') ? '#EF4444' : '#10B981' }}>{passwordMessage}</p>}
               <form onSubmit={handleChangePassword} style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-                <input type="password" placeholder="New Password" required minLength="6" value={newPassword} onChange={e => setNewPassword(e.target.value)} style={{ flex: 1, minWidth: '200px', padding: '0.8rem', borderRadius: '8px', border: '1px solid #334155', background: '#0F172A', color: 'white' }} />
+                <input type="password" placeholder="New Password" required minLength="6" value={newPassword} onChange={e => setNewPassword(e.target.value)} style={{ flex: 1, minWidth: '200px', padding: '0.8rem', borderRadius: '8px', border: '1px solid #374151', background: '#111827', color: 'white' }} />
                 <button type="submit" style={{ background: '#3B82F6', color: 'white', padding: '0.8rem 1.5rem', borderRadius: '8px', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>Update</button>
               </form>
             </div>
@@ -121,4 +126,3 @@ export default function TutorLayout({ children }) {
     </div>
   );
 }
-

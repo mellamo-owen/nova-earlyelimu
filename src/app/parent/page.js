@@ -79,7 +79,13 @@ export default function ParentDashboard() {
           <div style={{ width: '32px', height: '32px', background: '#1E3A8A', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', color: 'white', fontSize: '1rem' }}>N</div>
           <span style={{ fontWeight: '700', fontSize: '1.1rem', color: 'white' }}>Nova Parent</span>
         </div>
-        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} style={{ background: '#374151', border: 'none', color: 'white', fontSize: '1.2rem', cursor: 'pointer', padding: '0.5rem', borderRadius: '8px' }}></button>
+        
+        {/* CSS HAMBURGER MENU */}
+        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '0.5rem', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <div style={{ width: '25px', height: '3px', background: 'white', borderRadius: '2px' }}></div>
+          <div style={{ width: '25px', height: '3px', background: 'white', borderRadius: '2px' }}></div>
+          <div style={{ width: '25px', height: '3px', background: 'white', borderRadius: '2px' }}></div>
+        </button>
       </div>
 
       <div style={{ display: 'flex', flex: 1, flexDirection: 'row' }}>
@@ -116,7 +122,7 @@ export default function ParentDashboard() {
                     
                     <div style={{ marginTop: '1.5rem', padding: '1rem', borderRadius: '12px', background: isLocked ? 'rgba(239,68,68,0.1)' : 'rgba(16,185,129,0.1)', border: `1px solid ${isLocked ? '#EF4444' : '#10B981'}` }}>
                       <p style={{ color: isLocked ? '#FCA5A5' : '#10B981', fontWeight: '700', fontSize: '0.95rem' }}>
-                        {isLocked ? '🔒 Payment Required' : ' Account Active'}
+                        {isLocked ? 'Payment Required' : 'Account Active'}
                       </p>
                       <p style={{ color: isLocked ? '#F87171' : '#34D399', fontSize: '0.85rem', marginTop: '0.2rem' }}>
                         {isLocked ? 'Please pay to unlock the next week.' : 'Your child has full access to all classes.'}
@@ -189,4 +195,3 @@ export default function ParentDashboard() {
     </div>
   );
 }
-

@@ -21,10 +21,10 @@ export default function StudentLayout({ children }) {
   }, [router]);
 
   const navItems = [
-    { name: 'Dashboard', path: '/student', icon: '🏠' },
-    { name: 'Class Chat', path: '/student/group', icon: '💬' },
-    { name: 'Assignments', path: '/student/assignments', icon: '📝' },
-    { name: 'My ID Card', path: '/student/id-card', icon: '🪪' },
+    { name: 'Dashboard', path: '/student' },
+    { name: 'Class Chat', path: '/student/group' },
+    { name: 'Assignments', path: '/student/assignments' },
+    { name: 'My ID Card', path: '/student/id-card' },
   ];
 
   return (
@@ -35,7 +35,13 @@ export default function StudentLayout({ children }) {
           <div style={{ width: '32px', height: '32px', background: '#1E3A8A', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', color: 'white', fontSize: '1rem' }}>N</div>
           <span style={{ fontWeight: '700', fontSize: '1.1rem', color: 'white' }}>Nova</span>
         </div>
-        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} style={{ background: '#374151', border: 'none', color: 'white', fontSize: '1.2rem', cursor: 'pointer', padding: '0.5rem', borderRadius: '8px' }}></button>
+        
+        {/* CSS HAMBURGER MENU */}
+        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '0.5rem', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <div style={{ width: '25px', height: '3px', background: 'white', borderRadius: '2px' }}></div>
+          <div style={{ width: '25px', height: '3px', background: 'white', borderRadius: '2px' }}></div>
+          <div style={{ width: '25px', height: '3px', background: 'white', borderRadius: '2px' }}></div>
+        </button>
       </div>
 
       <div style={{ display: 'flex', flex: 1, flexDirection: 'row' }}>
@@ -51,12 +57,11 @@ export default function StudentLayout({ children }) {
               const isActive = pathname === item.path;
               return (
                 <Link key={item.name} href={item.path} onClick={() => setIsMobileMenuOpen(false)} style={{ 
-                  display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.8rem 1rem', 
+                  display: 'flex', alignItems: 'center', padding: '0.8rem 1rem', 
                   background: isActive ? '#1E3A8A' : 'transparent', 
                   borderRadius: '10px', color: isActive ? 'white' : '#9CA3AF', 
                   textDecoration: 'none', fontWeight: isActive ? '600' : '500', transition: 'all 0.2s'
                 }}>
-                  <span style={{ fontSize: '1.1rem' }}>{item.icon}</span>
                   {item.name}
                 </Link>
               );
@@ -96,4 +101,3 @@ export default function StudentLayout({ children }) {
     </div>
   );
 }
-
