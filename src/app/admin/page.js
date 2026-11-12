@@ -1,21 +1,19 @@
 ﻿'use client';
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState({ students: 0, pending: 0, revenue: 0 });
   const [recentPayments, setRecentPayments] = useState([]);
 
-  useEffect(() => {
-    fetchStats();
-  }, []);
+  useEffect(() => { fetchStats(); }, []);
 
   const fetchStats = async () => {
     const { count: total } = await supabase.from('students').select('*', { count: 'exact', head: true });
     const { count: pending } = await supabase.from('students').select('*', { count: 'exact', head: true }).eq('status', 'PENDING');
     
-    // Get approved payments for revenue
     const { data: payments } = await supabase.from('payments').select('*, students(name)').eq('status', 'APPROVED').order('created_at', { ascending: false });
     
     const revenue = payments ? payments.length * 1000 : 0;
@@ -24,9 +22,34 @@ export default function AdminDashboard() {
     setStats({ students: total || 0, pending: pending || 0, revenue });
   };
 
+  const generatePDF = () => {
+    const doc = new jsPDF();
+    doc.text("Nova earlyElimu - Revenue Report", 14, 15);
+    
+    const tableColumn = ["Student", "Amount", "Date"];
+    const tableRows = recentPayments.map(p => [
+      p.students?.name || 'Unknown',
+      'KES 1,000',
+      new Date(p.created_at).toLocaleDateString()
+    ]);
+
+    doc.autoTable({
+      head: [tableColumn],
+      body: tableRows,
+      startY: 20,
+    });
+    
+    doc.save("revenue-report.pdf");
+  };
+
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-      <h1 style={{ fontSize: '1.8rem', fontWeight: 'bold', marginBottom: '2rem' }}>Revenue & Analytics</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+        <h1 style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>Revenue & Analytics</h1>
+        <button onClick={generatePDF} style={{ background: '#10B981', color: 'white', padding: '0.6rem 1.2rem', borderRadius: '8px', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>
+          Download Revenue PDF
+        </button>
+      </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
         <div style={{ background: '#064E3B', padding: '1.5rem', borderRadius: '16px', border: '1px solid #065F46' }}>

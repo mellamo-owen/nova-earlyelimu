@@ -3,29 +3,42 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 
 export default function ParentDashboard() {
   const router = useRouter();
+  const [activeTab, setActiveTab] = useState('overview'); // overview, results, chat
   const [loading, setLoading] = useState(true);
   const [parentData, setParentData] = useState(null);
   const [studentData, setStudentData] = useState(null);
+  const [assignments, setAssignments] = useState([]);
+  const [messages, setMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState('');
 
   useEffect(() => {
-    const fetchData = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { router.push('/login'); return; }
-
-      const { data: parent } = await supabase.from('parents').select('*').eq('id', user.id).single();
-      if (parent) setParentData(parent);
-
-      const { data: student } = await supabase.from('students').select('*').eq('parent_id', user.id).single();
-      if (student) setStudentData(student);
-      
-      setLoading(false);
-    };
     fetchData();
-  }, [router]);
+  }, []);
+
+  const fetchData = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { router.push('/login'); return; }
+
+    const { data: parent } = await supabase.from('parents').select('*').eq('id', user.id).single();
+    if (parent) setParentData(parent);
+
+    const { data: student } = await supabase.from('students').select('*').eq('parent_id', user.id).single();
+    if (student) {
+      setStudentData(student);
+      
+      // Fetch grades
+      const { data: assignmentData } = await supabase.from('assignments').select('*, lessons(title, week)').eq('student_id', student.id).order('created_at', { ascending: false });
+      if (assignmentData) setAssignments(assignmentData);
+
+      // Fetch chat messages
+      const { data: chatData } = await supabase.from('messages').select('*').order('created_at', { ascending: true });
+      if (chatData) setMessages(chatData);
+    }
+    setLoading(false);
+  };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -34,79 +47,70 @@ export default function ParentDashboard() {
 
   if (loading) return <div style={{ padding: '2rem' }}>Loading...</div>;
 
-  const isPaid = studentData?.status === 'APPROVED';
-
   return (
-    <main style={{ minHeight: '100vh', background: '#F9FAFB', padding: '2rem' }}>
-      <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', background: '#F9FAFB' }}>
+      
+      {/* SIDEBAR */}
+      <aside style={{ width: '250px', background: 'white', padding: '1.5rem', borderRight: '1px solid #E5E7EB', display: 'flex', flexDirection: 'column' }}>
+        <h1 style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#1E3A8A', marginBottom: '2rem' }}>Nova Parent</h1>
+        <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
+          <button onClick={() => setActiveTab('overview')} style={{ textAlign: 'left', padding: '0.75rem', borderRadius: '8px', background: activeTab === 'overview' ? '#1E3A8A' : 'transparent', color: activeTab === 'overview' ? 'white' : '#6B7280', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>Overview</button>
+          <button onClick={() => setActiveTab('results')} style={{ textAlign: 'left', padding: '0.75rem', borderRadius: '8px', background: activeTab === 'results' ? '#1E3A8A' : 'transparent', color: activeTab === 'results' ? 'white' : '#6B7280', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>Graded Results</button>
+          <button onClick={() => setActiveTab('chat')} style={{ textAlign: 'left', padding: '0.75rem', borderRadius: '8px', background: activeTab === 'chat' ? '#1E3A8A' : 'transparent', color: activeTab === 'chat' ? 'white' : '#6B7280', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>Chat with Teacher</button>
+        </nav>
+        <button onClick={handleLogout} style={{ background: '#EF4444', color: 'white', padding: '0.75rem', borderRadius: '8px', fontWeight: 'bold', border: 'none', cursor: 'pointer', marginTop: 'auto' }}>Logout</button>
+      </aside>
+
+      {/* MAIN CONTENT */}
+      <main style={{ flex: 1, padding: '2rem' }}>
         
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+        {activeTab === 'overview' && (
           <div>
-            <h1 style={{ color: '#000000', fontSize: '1.8rem', fontWeight: 'bold' }}>Parent Dashboard</h1>
-            <p style={{ color: '#6B7280' }}>Welcome, {parentData?.name}</p>
-          </div>
-          <button onClick={handleLogout} style={{ background: '#1E3A8A', color: 'white', padding: '0.6rem 1.2rem', borderRadius: '8px', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>Logout</button>
-        </div>
-
-        {/* EXCLUSIVITY NOTICE */}
-        <div style={{ background: '#F0FDF4', padding: '1rem', borderRadius: '8px', border: '1px solid #10B981', marginBottom: '2rem', display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
-          <div style={{ background: '#10B981', color: 'white', padding: '0.5rem', borderRadius: '50%', fontWeight: 'bold', width: '25px', height: '25px', display: 'flex', justifyContent: 'center', alignItems: 'center', flexShrink: 0 }}>✓</div>
-          <div>
-            <p style={{ color: '#065F46', fontWeight: 'bold', fontSize: '0.95rem', marginBottom: '0.2rem' }}>You have secured one of the exclusive 20 student slots per teacher.</p>
-            <p style={{ color: '#047857', fontSize: '0.9rem' }}>Guarantee: The teacher who starts with your child will stay with them to the very end.</p>
-          </div>
-        </div>
-
-        {/* PAYWALL BANNER FOR PARENTS */}
-        {!isPaid && studentData?.status === 'WEEK1_FREE' && (
-          <div style={{ background: '#FEF2F2', border: '2px solid #EF4444', padding: '2rem', borderRadius: '16px', marginBottom: '2rem', textAlign: 'center' }}>
-            <h2 style={{ color: '#B91C1C', fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>Action Required: Week 1 is Over</h2>
-            <p style={{ color: '#7F1D1D', marginBottom: '1.5rem' }}>To unlock Weeks 2-8, the Class Group Chat, and 1-on-1 calls for {studentData.name}, please make a payment.</p>
-            <button onClick={() => router.push('/payment')} style={{ background: '#EF4444', color: 'white', padding: '1rem 2rem', borderRadius: '8px', fontWeight: 'bold', fontSize: '1rem', border: 'none', cursor: 'pointer', boxShadow: '0 4px 6px rgba(239, 68, 68, 0.3)' }}>
-              Pay KES 1,000 Weekly (or KES 8,000 Full)
-            </button>
+            <h2 style={{ fontSize: '1.8rem', fontWeight: 'bold', marginBottom: '1rem' }}>Welcome, {parentData?.name}</h2>
+            <div style={{ background: '#1E3A8A', padding: '2rem', borderRadius: '16px', color: 'white' }}>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>Student: {studentData?.name}</h3>
+              <p>ID: {studentData?.student_id_code}</p>
+              <p>Status: {studentData?.status}</p>
+            </div>
           </div>
         )}
 
-        {studentData ? (
-          <>
-            <div style={{ background: '#1E3A8A', padding: '2rem', borderRadius: '16px', color: 'white', marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <p style={{ color: '#9CA3AF', fontSize: '0.9rem', marginBottom: '0.5rem' }}>Student Profile</p>
-                <h2 style={{ fontSize: '1.8rem', fontWeight: 'bold', marginBottom: '0.2rem' }}>{studentData.name}</h2>
-                <p style={{ fontSize: '1rem', color: '#10B981', fontWeight: 'bold' }}>{studentData.student_id_code || 'ID Pending'}</p>
-                <p style={{ fontSize: '0.9rem', color: '#9CA3AF', marginTop: '0.5rem' }}>Age: {studentData.age} | Mode: {studentData.mode}</p>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <p style={{ color: '#9CA3AF', fontSize: '0.9rem', marginBottom: '0.5rem' }}>Payment Status</p>
-                <span style={{ padding: '0.5rem 1rem', borderRadius: '20px', fontSize: '0.9rem', fontWeight: 'bold', background: isPaid ? '#D1FAE5' : '#FEF3C7', color: isPaid ? '#065F46' : '#D97706' }}>
-                  {isPaid ? 'APPROVED' : 'PENDING PAYMENT'}
-                </span>
-              </div>
+        {activeTab === 'results' && (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <h2 style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>Graded Results</h2>
+              <button style={{ background: '#10B981', color: 'white', padding: '0.6rem 1rem', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>Download PDF Report</button>
             </div>
-
-            <div style={{ background: 'white', padding: '2rem', borderRadius: '16px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
-              <h2 style={{ color: '#000000', fontSize: '1.4rem', fontWeight: 'bold', marginBottom: '1rem' }}>Payment Options</h2>
-              <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-                <div style={{ flex: 1, minWidth: '250px', background: '#F9FAFB', padding: '1.5rem', borderRadius: '12px', border: '1px solid #E5E7EB' }}>
-                  <p style={{ color: '#6B7280', fontSize: '0.9rem', marginBottom: '0.5rem' }}>Weekly Fee</p>
-                  <p style={{ color: '#000000', fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1rem' }}>KES 1,000 <span style={{fontSize: '1rem', fontWeight: 'normal', color: '#6B7280'}}>/ week</span></p>
-                  <button onClick={() => router.push('/payment')} style={{ width: '100%', background: '#10B981', color: 'white', padding: '0.8rem', borderRadius: '8px', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>Pay Weekly</button>
+            <div style={{ background: 'white', padding: '1.5rem', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
+              {assignments.map(a => (
+                <div key={a.id} style={{ padding: '1rem', borderBottom: '1px solid #E5E7EB' }}>
+                  <p style={{ fontWeight: 'bold' }}>Week {a.lessons?.week}: {a.lessons?.title}</p>
+                  <p style={{ color: '#10B981' }}>Mark: {a.mark || 'Pending'}</p>
+                  <p style={{ color: '#6B7280', fontStyle: 'italic' }}>"{a.teacher_comment}"</p>
                 </div>
-                <div style={{ flex: 1, minWidth: '250px', background: '#F9FAFB', padding: '1.5rem', borderRadius: '12px', border: '1px solid #E5E7EB' }}>
-                  <p style={{ color: '#6B7280', fontSize: '0.9rem', marginBottom: '0.5rem' }}>Full Course</p>
-                  <p style={{ color: '#000000', fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1rem' }}>KES 8,000 <span style={{fontSize: '1rem', fontWeight: 'normal', color: '#6B7280'}}> / once</span></p>
-                  <button onClick={() => router.push('/payment')} style={{ width: '100%', background: '#1E3A8A', color: 'white', padding: '0.8rem', borderRadius: '8px', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>Pay Full 8 Weeks</button>
-                </div>
-              </div>
+              ))}
             </div>
-          </>
-        ) : (
-          <div style={{ background: 'white', padding: '2rem', borderRadius: '12px', textAlign: 'center' }}>
-            <p style={{ color: '#6B7280' }}>No student found for this account.</p>
           </div>
         )}
-      </div>
-    </main>
+
+        {activeTab === 'chat' && (
+          <div>
+            <h2 style={{ fontSize: '1.8rem', fontWeight: 'bold', marginBottom: '1rem' }}>Chat with Teacher</h2>
+            <div style={{ background: 'white', borderRadius: '12px', padding: '1rem', height: '400px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {messages.map(m => (
+                <div key={m.id} style={{ alignSelf: m.sender_role === 'parent' ? 'flex-end' : 'flex-start', background: m.sender_role === 'parent' ? '#1E3A8A' : '#E5E7EB', color: m.sender_role === 'parent' ? 'white' : 'black', padding: '0.8rem', borderRadius: '12px', maxWidth: '80%' }}>
+                  <p style={{ fontSize: '0.75rem', opacity: 0.7 }}>{m.sender_name}</p>
+                  <p>{m.text_content}</p>
+                </div>
+              ))}
+            </div>
+            <form onSubmit={(e) => { e.preventDefault(); setNewMessage(''); }} style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
+              <input type="text" value={newMessage} onChange={e => setNewMessage(e.target.value)} placeholder="Type a message to teacher..." style={{ flex: 1, padding: '0.8rem', borderRadius: '8px', border: '1px solid #D1D5DB' }} />
+              <button type="submit" style={{ background: '#10B981', color: 'white', padding: '0 1.5rem', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>Send</button>
+            </form>
+          </div>
+        )}
+      </main>
+    </div>
   );
 }
