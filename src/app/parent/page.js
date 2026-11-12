@@ -1,140 +1,109 @@
 ﻿'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
-import { useRouter } from 'next/navigation';
 
-export default function ParentDashboard() {
-  const router = useRouter();
-  const [activeTab, setActiveTab] = useState('overview');
-  const [loading, setLoading] = useState(true);
-  const [parentData, setParentData] = useState(null);
-  const [studentData, setStudentData] = useState(null);
-  const [assignments, setAssignments] = useState([]);
+export default function ParentChat() {
   const [messages, setMessages] = useState([]);
-  const [newMessage, setNewMessage] = useState('');
-  const [isLocked, setIsLocked] = useState(false);
-  const [daysLeft, setDaysLeft] = useState(0);
+  const [text, setText] = useState('');
+  const [parentId, setParentId] = useState(null);
+  const [tutorId, setTutorId] = useState(null);
+  const [tutorName, setTutorName] = useState('Teacher');
+  const messagesEndRef = useRef(null);
 
   useEffect(() => {
-    fetchData();
+    const initChat = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      setParentId(user.id);
+
+      // Find the child's assigned tutor
+      const { data: student } = await supabase.from('students').select('tutor_id').eq('parent_id', user.id).single();
+      
+      if (student && student.tutor_id) {
+        setTutorId(student.tutor_id);
+        
+        // Get the tutor's name
+        const { data: tutorData } = await supabase.from('tutors').select('name').eq('id', student.tutor_id).single();
+        if (tutorData) setTutorName(tutorData.name);
+
+        // Fetch only private messages between this parent and this tutor
+        const { data: msgs } = await supabase
+          .from('messages')
+          .select('*')
+          .or(`and(parent_id.eq.${user.id},tutor_id.eq.${student.tutor_id}),and(sender_role.eq.tutor,parent_id.eq.${user.id})`)
+          .order('created_at', { ascending: true });
+          
+        if (msgs) setMessages(msgs);
+
+        // Listen for new messages
+        const subscription = supabase.channel('private-parent-chat')
+          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
+            if (payload.new.parent_id === user.id && payload.new.tutor_id === student.tutor_id) {
+              setMessages(prev => [...prev, payload.new]);
+            }
+          }).subscribe();
+
+        return () => supabase.removeChannel(subscription);
+      }
+    };
+    initChat();
   }, []);
 
-  const fetchData = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { router.push('/login'); return; }
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
-    const { data: parent } = await supabase.from('parents').select('*').eq('id', user.id).single();
-    if (parent) setParentData(parent);
+  const sendMessage = async (e) => {
+    e.preventDefault();
+    if (!text.trim() || !tutorId) return;
 
-    const { data: student } = await supabase.from('students').select('*').eq('parent_id', user.id).single();
-    if (student) {
-      setStudentData(student);
-      
-      // 🛑 THE PERFECT LOCK LOGIC
-      const now = new Date();
-      const expiryDate = student.payment_expires_at ? new Date(student.payment_expires_at) : null;
-      
-      if (expiryDate && expiryDate > now) {
-        setIsLocked(false);
-        const diffTime = Math.abs(expiryDate - now);
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        setDaysLeft(diffDays);
-      } else {
-        setIsLocked(true);
-      }
+    const newMsg = {
+      sender_name: 'Parent',
+      sender_role: 'parent',
+      text_content: text,
+      parent_id: parentId,
+      tutor_id: tutorId
+    };
 
-      const { data: assignmentData } = await supabase.from('assignments').select('*, lessons(title, week)').eq('student_id', student.id).order('created_at', { ascending: false });
-      if (assignmentData) setAssignments(assignmentData);
-
-      const { data: chatData } = await supabase.from('messages').select('*').order('created_at', { ascending: true });
-      if (chatData) setMessages(chatData);
-    }
-    setLoading(false);
+    setMessages(prev => [...prev, newMsg]);
+    setText('');
+    
+    await supabase.from('messages').insert([newMsg]);
   };
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push('/login');
-  };
-
-  if (loading) return <div style={{ padding: '2rem' }}>Loading...</div>;
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#F9FAFB' }}>
-      
-      <aside style={{ width: '250px', background: 'white', padding: '1.5rem', borderRight: '1px solid #E5E7EB', display: 'flex', flexDirection: 'column' }}>
-        <h1 style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#1E3A8A', marginBottom: '2rem' }}>Nova Parent</h1>
-        <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
-          <button onClick={() => setActiveTab('overview')} style={{ textAlign: 'left', padding: '0.75rem', borderRadius: '8px', background: activeTab === 'overview' ? '#1E3A8A' : 'transparent', color: activeTab === 'overview' ? 'white' : '#6B7280', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>Overview</button>
-          <button onClick={() => setActiveTab('results')} style={{ textAlign: 'left', padding: '0.75rem', borderRadius: '8px', background: activeTab === 'results' ? '#1E3A8A' : 'transparent', color: activeTab === 'results' ? 'white' : '#6B7280', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>Graded Results</button>
-          <button onClick={() => setActiveTab('chat')} style={{ textAlign: 'left', padding: '0.75rem', borderRadius: '8px', background: activeTab === 'chat' ? '#1E3A8A' : 'transparent', color: activeTab === 'chat' ? 'white' : '#6B7280', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>Chat with Teacher</button>
-        </nav>
-        <button onClick={handleLogout} style={{ background: '#EF4444', color: 'white', padding: '0.75rem', borderRadius: '8px', fontWeight: 'bold', border: 'none', cursor: 'pointer', marginTop: 'auto' }}>Logout</button>
-      </aside>
+    <div style={{ maxWidth: '800px', margin: '0 auto', height: 'calc(100vh - 100px)', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ background: '#1E293B', padding: '1rem', borderRadius: '12px 12px 0 0', borderBottom: '1px solid #334155' }}>
+        <h1 style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'white' }}>Chat with {tutorName}</h1>
+        <p style={{ fontSize: '0.8rem', color: '#94A3B8' }}>This is a private chat. Only you and the teacher can see this.</p>
+      </div>
 
-      <main style={{ flex: 1, padding: '2rem' }}>
-        
-        {activeTab === 'overview' && (
-          <div>
-            <h2 style={{ fontSize: '1.8rem', fontWeight: 'bold', marginBottom: '1rem' }}>Welcome, {parentData?.name}</h2>
-            
-            {/* PAYMENT STATUS BANNER */}
-            {isLocked ? (
-              <div style={{ background: '#FEF2F2', border: '2px solid #EF4444', padding: '1.5rem', borderRadius: '12px', marginBottom: '1rem' }}>
-                <h3 style={{ color: '#B91C1C', fontWeight: 'bold', fontSize: '1.2rem' }}>Payment Required 🔒</h3>
-                <p style={{ color: '#7F1D1D' }}>Your child's access has expired. Please pay to unlock the next week or 8 weeks.</p>
-              </div>
-            ) : (
-              <div style={{ background: '#F0FDF4', border: '1px solid #10B981', padding: '1.5rem', borderRadius: '12px', marginBottom: '1rem' }}>
-                <h3 style={{ color: '#065F46', fontWeight: 'bold', fontSize: '1.2rem' }}>Active ✅</h3>
-                <p style={{ color: '#047857' }}>Your child has <strong>{daysLeft} days</strong> of access remaining.</p>
-              </div>
-            )}
-
-            <div style={{ background: '#1E3A8A', padding: '2rem', borderRadius: '16px', color: 'white' }}>
-              <h3 style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>Student: {studentData?.name}</h3>
-              <p>ID: {studentData?.student_id_code}</p>
+      <div style={{ flex: 1, background: '#F9FAFB', padding: '1rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        {messages.map(msg => (
+          <div key={msg.id} style={{ alignSelf: msg.sender_role === 'parent' ? 'flex-end' : 'flex-start', maxWidth: '80%' }}>
+            <p style={{ fontSize: '0.75rem', color: '#6B7280', marginBottom: '0.2rem', textAlign: msg.sender_role === 'parent' ? 'right' : 'left' }}>
+              {msg.sender_name}
+            </p>
+            <div style={{ background: msg.sender_role === 'parent' ? '#1E3A8A' : '#E5E7EB', padding: '0.8rem', borderRadius: '12px', color: msg.sender_role === 'parent' ? 'white' : 'black' }}>
+              <p style={{ fontSize: '0.95rem' }}>{msg.text_content}</p>
             </div>
           </div>
-        )}
+        ))}
+        {messages.length === 0 && <p style={{ textAlign: 'center', color: '#6B7280', marginTop: '2rem' }}>No messages yet. Say hello to your teacher!</p>}
+        <div ref={messagesEndRef} />
+      </div>
 
-        {activeTab === 'results' && (
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <h2 style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>Graded Results</h2>
-              <button style={{ background: '#10B981', color: 'white', padding: '0.6rem 1rem', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>Download PDF</button>
-            </div>
-            <div style={{ background: 'white', padding: '1.5rem', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
-              {assignments.map(a => (
-                <div key={a.id} style={{ padding: '1rem', borderBottom: '1px solid #E5E7EB' }}>
-                  <p style={{ fontWeight: 'bold' }}>Week {a.lessons?.week}: {a.lessons?.title}</p>
-                  <p style={{ color: '#10B981' }}>Mark: {a.mark || 'Pending'}</p>
-                  <p style={{ color: '#6B7280', fontStyle: 'italic' }}>"{a.teacher_comment}"</p>
-                </div>
-              ))}
-            </div>
-          </div>
+      <div style={{ background: '#E5E7EB', padding: '1rem', borderRadius: '0 0 12px 12px', borderTop: '1px solid #D1D5DB' }}>
+        {!tutorId ? (
+          <p style={{ color: '#EF4444', textAlign: 'center', fontWeight: 'bold' }}>No tutor assigned to your child yet.</p>
+        ) : (
+          <form onSubmit={sendMessage} style={{ display: 'flex', gap: '0.5rem' }}>
+            <input type="text" value={text} onChange={e => setText(e.target.value)} placeholder="Type a message to the teacher..." style={{ flex: 1, padding: '0.8rem', borderRadius: '8px', border: '1px solid #D1D5DB', background: 'white', color: 'black' }} />
+            <button type="submit" style={{ background: '#1E3A8A', color: 'white', padding: '0 1.5rem', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>Send</button>
+          </form>
         )}
-
-        {activeTab === 'chat' && (
-          <div>
-            <h2 style={{ fontSize: '1.8rem', fontWeight: 'bold', marginBottom: '1rem' }}>Chat with Teacher</h2>
-            <div style={{ background: 'white', borderRadius: '12px', padding: '1rem', height: '400px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {messages.map(m => (
-                <div key={m.id} style={{ alignSelf: m.sender_role === 'parent' ? 'flex-end' : 'flex-start', background: m.sender_role === 'parent' ? '#1E3A8A' : '#E5E7EB', color: m.sender_role === 'parent' ? 'white' : 'black', padding: '0.8rem', borderRadius: '12px', maxWidth: '80%' }}>
-                  <p style={{ fontSize: '0.75rem', opacity: 0.7 }}>{m.sender_name}</p>
-                  <p>{m.text_content}</p>
-                </div>
-              ))}
-            </div>
-            <form onSubmit={(e) => { e.preventDefault(); setNewMessage(''); }} style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
-              <input type="text" value={newMessage} onChange={e => setNewMessage(e.target.value)} placeholder="Type a message to teacher..." style={{ flex: 1, padding: '0.8rem', borderRadius: '8px', border: '1px solid #D1D5DB' }} />
-              <button type="submit" style={{ background: '#10B981', color: 'white', padding: '0 1.5rem', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>Send</button>
-            </form>
-          </div>
-        )}
-      </main>
+      </div>
     </div>
   );
 }
