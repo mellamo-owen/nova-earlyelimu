@@ -34,45 +34,37 @@ export default function Register() {
     }
 
     try {
-      // 1. Create Parent Auth
+      // 1. Create Parent Auth & Profile
       const { data: parentAuth, error: parentAuthError } = await supabase.auth.signUp({ email: parentEmail, password: password });
-      
-      if (parentAuthError) {
-        if (parentAuthError.message.includes('already registered')) {
-          throw new Error('This parent email is already registered. Please log in instead.');
-        }
-        throw new Error('Parent Auth failed: ' + parentAuthError.message);
-      }
+      if (parentAuthError) throw new Error('Parent Auth: ' + parentAuthError.message);
 
-      // 2. Create Parent Profile
       const { error: parentError } = await supabase.from('parents').upsert([{ 
         id: parentAuth.user.id, name: parentName, email: parentEmail, whatsapp: parentWhatsapp, role: 'parent'
       }]);
-      if (parentError) throw new Error('Parent profile failed: ' + parentError.message);
+      if (parentError) throw new Error('Parent Profile: ' + parentError.message);
 
-      // 3. Create Kid Auth
+      // 🔥 CRITICAL: Log the parent out immediately so it doesn't interfere with the Kid
+      await supabase.auth.signOut();
+
+      // 2. Create Kid Auth & Profile
       const { data: kidAuth, error: kidAuthError } = await supabase.auth.signUp({ email: kidEmail, password: kidPassword });
-      if (kidAuthError) {
-        if (kidAuthError.message.includes('already registered')) {
-          throw new Error('This Kid email is already registered. Please use a different email.');
-        }
-        throw new Error('Kid Auth failed: ' + kidAuthError.message);
-      }
+      if (kidAuthError) throw new Error('Kid Auth: ' + kidAuthError.message);
 
-      // 4. Create Kid Profile
       const { error: kidError } = await supabase.from('students').insert([{
         parent_id: parentAuth.user.id, auth_user_id: kidAuth.user.id, name: kidName, age: ageNum, mode: kidMode, status: 'PENDING'
       }]);
-      
-      if (kidError) throw new Error('Kid registration failed: ' + kidError.message);
+      if (kidError) throw new Error('Kid Profile: ' + kidError.message);
 
-      // NOTE: We removed the signOut() here so the parent stays logged in
+      // 🔥 CRITICAL: Log the kid out so the slate is clean
+      await supabase.auth.signOut();
 
-      alert('Registration successful! Welcome to your dashboard.');
-      router.push('/parent'); // <--- REDIRECT DIRECTLY TO PARENT DASHBOARD
+      alert('Registration successful! You and your child can now log in.');
+      router.push('/login');
 
     } catch (err) {
       setError(err.message);
+      // Failsafe logout
+      await supabase.auth.signOut();
     } finally {
       setLoading(false);
     }

@@ -19,55 +19,38 @@ export default function Login() {
     setError(null);
 
     try {
-      // 1. Wipe any existing session completely
+      // 1. Destroy any lingering sessions
       await supabase.auth.signOut();
 
-      // 2. Sign in with Supabase Auth
+      // 2. Authenticate
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password });
+      if (authError) throw new Error(authError.message);
 
-      if (authError) {
-        throw new Error("Auth Error: " + authError.message);
-      }
+      const userId = authData.user.id;
 
-      console.log("Auth successful. User ID:", authData.user.id);
-
-      // 3. Check Parent Table
-      const { data: parentProfile, error: parentError } = await supabase
-        .from('parents')
-        .select('role')
-        .eq('id', authData.user.id)
-        .maybeSingle(); // Using maybeSingle so it doesn't crash if not found
-
-      if (parentError) console.log("Parent fetch error:", parentError);
+      // 3. Check Parents Table first
+      const { data: parentData } = await supabase.from('parents').select('role').eq('id', userId).maybeSingle();
       
-      if (parentProfile) {
-        console.log("Found in parents table. Role:", parentProfile.role);
-        if (parentProfile.role === 'admin') {
-          router.push('/admin');
+      if (parentData) {
+        if (parentData.role === 'admin') {
+          window.location.href = '/admin';
         } else {
-          router.push('/parent');
+          window.location.href = '/parent';
         }
         return;
       }
 
-      // 4. Check Student Table (if not found in parents)
-      const { data: studentProfile, error: studentError } = await supabase
-        .from('students')
-        .select('id')
-        .eq('auth_user_id', authData.user.id)
-        .maybeSingle();
-
-      if (studentError) console.log("Student fetch error:", studentError);
-
-      if (studentProfile) {
-        console.log("Found in students table.");
-        router.push('/student');
-      } else {
-        throw new Error("Account found in Auth, but missing from both Parents and Students tables.");
-      }
+      // 4. Check Students Table
+      const { data: studentData } = await supabase.from('students').select('id').eq('auth_user_id', userId).maybeSingle();
       
+      if (studentData) {
+        window.location.href = '/student';
+        return;
+      }
+
+      throw new Error('Profile not found in database. Please contact support.');
+
     } catch (err) {
-      console.error("Login failed:", err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -75,22 +58,12 @@ export default function Login() {
   };
 
   const handleForgotPassword = async () => {
-    if (!email) {
-      setError('Please enter your email address first.');
-      return;
-    }
-    setLoading(true);
-    setError(null);
-
+    if (!email) { setError('Please enter your email address first.'); return; }
+    setLoading(true); setError(null);
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: window.location.origin + '/reset-password',
     });
-
-    if (error) {
-      setError(error.message);
-    } else {
-      setResetSent(true);
-    }
+    if (error) setError(error.message); else setResetSent(true);
     setLoading(false);
   };
 
