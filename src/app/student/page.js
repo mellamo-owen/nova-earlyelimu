@@ -17,20 +17,27 @@ export default function StudentDashboard() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { router.push('/login'); return; }
 
+      // Get student profile
       const { data: studentData } = await supabase.from('students').select('*').eq('auth_user_id', user.id).single();
       
       if (studentData) {
         setStudent(studentData);
+        
         const now = new Date();
         const expiryDate = studentData.payment_expires_at ? new Date(studentData.payment_expires_at) : null;
         if (!expiryDate || expiryDate < now) setIsLocked(true);
 
-        const { data: lessonData } = await supabase.from('lessons').select('*').order('week', { ascending: true });
+        // 🛑 CRITICAL FIX: Fetch ALL lessons without ANY filters
+        const { data: lessonData, error } = await supabase.from('lessons').select('*');
+
+        console.log("LESSONS FETCHED FROM DATABASE:", lessonData);
+        console.log("ERROR (if any):", error);
+
         if (lessonData && lessonData.length > 0) {
-          setLessons(lessonData);
-          const upcoming = lessonData.filter(l => l.class_date && new Date(l.class_date) > now).sort((a,b) => new Date(a.class_date) - new Date(b.class_date));
-          if (upcoming.length > 0) setNextClass(upcoming[0]);
-          else setNextClass(lessonData[lessonData.length - 1]);
+          // Sort them by week number in JavaScript, not SQL
+          const sortedLessons = lessonData.sort((a, b) => a.week - b.week);
+          setLessons(sortedLessons);
+          setNextClass(sortedLessons[0]); // Just grab the first week for the card
         }
       }
       setLoading(false);
@@ -74,10 +81,10 @@ export default function StudentDashboard() {
         <div style={{ background: 'linear-gradient(135deg, #1E3A8A 0%, #111827 100%)', padding: '2rem', borderRadius: '20px', color: 'white', position: 'relative', overflow: 'hidden', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5)' }}>
           <div style={{ position: 'absolute', top: '-50px', right: '-50px', width: '150px', height: '150px', background: 'rgba(16, 185, 129, 0.2)', borderRadius: '50%', filter: 'blur(40px)' }}></div>
           <div style={{ position: 'relative', zIndex: 1 }}>
-            <p style={{ color: '#93C5FD', fontSize: '0.85rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '1rem' }}>Latest Class</p>
+            <p style={{ color: '#93C5FD', fontSize: '0.85rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '1rem' }}>Next Class</p>
             {nextClass ? (
               <>
-                <h2 style={{ fontSize: '1.5rem', fontWeight: '800', marginBottom: '0.5rem' }}>{nextClass.title}</h2>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: '800', marginBottom: '0.5rem' }}>Week {nextClass.week}: {nextClass.title}</h2>
                 <p style={{ color: '#10B981', fontSize: '0.95rem', marginBottom: '1rem', fontWeight: '500' }}>🗓️ {formatDate(nextClass.class_date)}</p>
                 {nextClass.assignment_task && (
                   <p style={{ color: '#D1D5DB', fontSize: '0.9rem', marginBottom: '1.5rem', background: 'rgba(255,255,255,0.1)', padding: '0.5rem', borderRadius: '6px' }}>
