@@ -20,7 +20,11 @@ export default function TutorGroupChat() {
 
     const subscription = supabase.channel('public:messages')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
-        setMessages(prev => [...prev, payload.new]);
+        // Prevent duplicate messages if we already added it optimistically
+        setMessages(prev => {
+          if (prev.find(m => m.id === payload.new.id)) return prev;
+          return [...prev, payload.new];
+        });
       }).subscribe();
 
     return () => supabase.removeChannel(subscription);
@@ -46,11 +50,18 @@ export default function TutorGroupChat() {
   const sendText = async (e) => {
     e.preventDefault();
     if (!text.trim()) return;
+    
+    const tempId = Date.now().toString();
+    const newMsg = { id: tempId, sender_name: tutorName, sender_role: 'tutor', text_content: text, created_at: new Date().toISOString() };
+    
+    // 1. Instantly add to UI (Optimistic)
+    setMessages(prev => [...prev, newMsg]);
     setText('');
+    
+    // 2. Send to Database
     await supabase.from('messages').insert([{ sender_name: tutorName, sender_role: 'tutor', text_content: text }]);
   };
 
-  // --- VOICE RECORDING LOGIC ---
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -76,8 +87,6 @@ export default function TutorGroupChat() {
         if (!error) {
           const { data: urlData } = supabase.storage.from('chat-audio').getPublicUrl(fileName);
           await supabase.from('messages').insert([{ sender_name: tutorName, sender_role: 'tutor', audio_url: urlData.publicUrl }]);
-        } else {
-          alert('Failed to upload voice note.');
         }
         
         stream.getTracks().forEach(track => track.stop());

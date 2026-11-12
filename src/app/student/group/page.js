@@ -9,7 +9,6 @@ export default function StudentGroupChat() {
   const [text, setText] = useState('');
   const [studentName, setStudentName] = useState('');
   
-  // Recording State
   const [isRecording, setIsRecording] = useState(false);
   const [recordTime, setRecordTime] = useState(0);
   const mediaRecorderRef = useRef(null);
@@ -23,7 +22,10 @@ export default function StudentGroupChat() {
 
     const subscription = supabase.channel('public:messages')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
-        setMessages(prev => [...prev, payload.new]);
+        setMessages(prev => {
+          if (prev.find(m => m.id === payload.new.id)) return prev;
+          return [...prev, payload.new];
+        });
       }).subscribe();
 
     return () => supabase.removeChannel(subscription);
@@ -49,16 +51,20 @@ export default function StudentGroupChat() {
   const sendText = async (e) => {
     e.preventDefault();
     if (!text.trim()) return;
+    
+    const tempId = Date.now().toString();
+    const newMsg = { id: tempId, sender_name: studentName, sender_role: 'student', text_content: text, created_at: new Date().toISOString() };
+    
+    setMessages(prev => [...prev, newMsg]);
     setText('');
+    
     await supabase.from('messages').insert([{ sender_name: studentName, sender_role: 'student', text_content: text }]);
   };
 
-  // --- VOICE RECORDING LOGIC ---
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       
-      // Detect correct format for different devices
       let mimeType = 'audio/webm';
       if (MediaRecorder.isTypeSupported('audio/mp4')) mimeType = 'audio/mp4';
       if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) mimeType = 'audio/webm;codecs=opus';
@@ -75,17 +81,13 @@ export default function StudentGroupChat() {
         const fileExt = mimeType.includes('mp4') ? 'mp4' : 'webm';
         const fileName = `voice-${Date.now()}.${fileExt}`;
         
-        // Upload to Supabase
         const { error } = await supabase.storage.from('chat-audio').upload(fileName, audioBlob);
         
         if (!error) {
           const { data: urlData } = supabase.storage.from('chat-audio').getPublicUrl(fileName);
           await supabase.from('messages').insert([{ sender_name: studentName, sender_role: 'student', audio_url: urlData.publicUrl }]);
-        } else {
-          alert('Failed to upload voice note. Please try again.');
         }
         
-        // Stop all tracks to release the mic
         stream.getTracks().forEach(track => track.stop());
       };
 
@@ -93,13 +95,12 @@ export default function StudentGroupChat() {
       setIsRecording(true);
       setRecordTime(0);
       
-      // Start visual timer
       timerRef.current = setInterval(() => {
         setRecordTime(prev => prev + 1);
       }, 1000);
 
     } catch (err) {
-      alert('Microphone access denied. Please allow microphone permissions in your browser.');
+      alert('Microphone access denied.');
     }
   };
 
