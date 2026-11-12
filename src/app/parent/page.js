@@ -27,10 +27,8 @@ export default function ParentDashboard() {
     
     if (student) {
       setStudentData(student);
-      
       const { data: callData } = await supabase.from('calls').select('*').eq('student_id', student.id).order('created_at', { ascending: false }).limit(1).single();
       if (callData) setLatestCall(callData);
-      
       const { data: assignmentData } = await supabase.from('assignments').select('*, lessons(title, week)').eq('student_id', student.id).order('created_at', { ascending: false });
       if (assignmentData) setAssignments(assignmentData);
     }
@@ -57,16 +55,18 @@ export default function ParentDashboard() {
           <button onClick={handleLogout} style={{ background: '#1E3A8A', color: 'white', padding: '0.6rem 1.2rem', borderRadius: '8px', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>Logout</button>
         </div>
 
-        {/* EXCLUSIVITY & TEACHER GUARANTEE NOTICE */}
-        <div style={{ background: '#F0FDF4', padding: '1rem', borderRadius: '8px', border: '1px solid #10B981', marginBottom: '2rem', display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
-          <div style={{ background: '#10B981', color: 'white', padding: '0.5rem', borderRadius: '50%', fontWeight: 'bold', width: '25px', height: '25px', display: 'flex', justifyContent: 'center', alignItems: 'center', flexShrink: 0 }}>✓</div>
-          <div>
-            <p style={{ color: '#065F46', fontWeight: 'bold', fontSize: '0.95rem', marginBottom: '0.2rem' }}>
-              You have secured one of the exclusive 20 student slots per teacher.
-            </p>
-            <p style={{ color: '#047857', fontSize: '0.9rem' }}>
-              Guarantee: The teacher who starts with your child will stay with them to the very end.
-            </p>
+        {/* PLACEHOLDER 3: BACKGROUND BANNER (Parent Dashboard) */}
+        <div style={{ 
+          width: '100%', height: '160px', background: '#1E3A8A', borderRadius: '16px', marginBottom: '2rem',
+          backgroundImage: 'url("/parent-banner.jpg")', backgroundSize: 'cover', backgroundPosition: 'center',
+          display: 'flex', alignItems: 'center', padding: '0 2rem', position: 'relative', overflow: 'hidden'
+        }}>
+          {/* Fallback if no image is uploaded */}
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(30,58,138,0.8)', zIndex: 0 }}></div>
+          
+          <div style={{ position: 'relative', zIndex: 1, color: 'white' }}>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>Parent Portal</h2>
+            <p style={{ color: '#10B981', fontWeight: 'bold' }}>Guarantee: The teacher who starts with your child stays to the end.</p>
           </div>
         </div>
 
@@ -76,47 +76,41 @@ export default function ParentDashboard() {
           </div>
         ) : (
           <>
-            <div style={{ background: '#1E3A8A', padding: '2rem', borderRadius: '16px', color: 'white', marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <p style={{ color: '#9CA3AF', fontSize: '0.9rem', marginBottom: '0.5rem' }}>Student Profile</p>
-                <h2 style={{ fontSize: '1.8rem', fontWeight: 'bold', marginBottom: '0.2rem' }}>{studentData.name}</h2>
-                <p style={{ fontSize: '1rem', color: '#10B981', fontWeight: 'bold' }}>{studentData.student_id_code || 'ID Pending'}</p>
-                <p style={{ fontSize: '0.9rem', color: '#9CA3AF', marginTop: '0.5rem' }}>Age: {studentData.age} | Mode: {studentData.mode}</p>
+            {/* STUDENT ID CARD (From the last step) */}
+            {studentData?.status !== 'PENDING' && (
+              <div style={{ background: 'linear-gradient(135deg, #1E3A8A 0%, #000000 100%)', borderRadius: '16px', padding: '1.5rem', color: 'white', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)', position: 'relative', overflow: 'hidden', marginBottom: '2rem' }}>
+                <div style={{ position: 'absolute', top: '-20px', right: '-20px', width: '100px', height: '100px', background: 'rgba(16,185,129,0.2)', borderRadius: '50%' }}></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', position: 'relative', zIndex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    {/* PLACEHOLDER 4: LOGO (ID Card) */}
+                    <img src="/logo.png" alt="Nova" style={{ width: '30px', height: '30px', borderRadius: '6px', objectFit: 'cover' }} onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} />
+                    <div style={{ display: 'none', width: '30px', height: '30px', background: '#10B981', borderRadius: '6px', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', color: '#000' }}>N</div>
+                    <span style={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Nova earlyElimu</span>
+                  </div>
+                  <span style={{ fontSize: '0.7rem', color: '#10B981', fontWeight: 'bold', letterSpacing: '1px' }}>STUDENT</span>
+                </div>
+                <div style={{ marginBottom: '1.5rem', position: 'relative', zIndex: 1 }}>
+                  <p style={{ fontSize: '0.7rem', color: '#9CA3AF', textTransform: 'uppercase', marginBottom: '0.2rem' }}>Name</p>
+                  <h2 style={{ fontSize: '1.4rem', fontWeight: 'bold', textTransform: 'capitalize' }}>{studentData.name}</h2>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', position: 'relative', zIndex: 1 }}>
+                  <div>
+                    <p style={{ fontSize: '0.7rem', color: '#9CA3AF', textTransform: 'uppercase', marginBottom: '0.2rem' }}>Student ID</p>
+                    <p style={{ fontWeight: 'bold', color: '#10B981' }}>{studentData.student_id_code}</p>
+                  </div>
+                  <div>
+                    <p style={{ fontSize: '0.7rem', color: '#9CA3AF', textTransform: 'uppercase', marginBottom: '0.2rem' }}>Age</p>
+                    <p style={{ fontWeight: 'bold' }}>{studentData.age} Years</p>
+                  </div>
+                  <div style={{ gridColumn: '1 / -1' }}>
+                    <p style={{ fontSize: '0.7rem', color: '#9CA3AF', textTransform: 'uppercase', marginBottom: '0.2rem' }}>Course</p>
+                    <p style={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Fullstack Development</p>
+                  </div>
+                </div>
               </div>
-              <div style={{ textAlign: 'right' }}>
-                <p style={{ color: '#9CA3AF', fontSize: '0.9rem', marginBottom: '0.5rem' }}>Current Status</p>
-                <span style={{ padding: '0.5rem 1rem', borderRadius: '20px', fontSize: '0.9rem', fontWeight: 'bold', background: studentData.status === 'PENDING' ? '#FEF3C7' : '#D1FAE5', color: studentData.status === 'PENDING' ? '#D97706' : '#065F46' }}>
-                  {studentData.status}
-                </span>
-              </div>
-            </div>
+            )}
 
-            <div style={{ background: 'white', padding: '2rem', borderRadius: '16px', marginBottom: '2rem', border: '2px solid #10B981', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
-              <h2 style={{ color: '#1E3A8A', fontSize: '1.3rem', fontWeight: 'bold', marginBottom: '1rem' }}>What Your Child Will Achieve</h2>
-              <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '0.8rem', fontSize: '0.95rem' }}>
-                <li style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
-                  <span style={{ color: '#10B981', fontWeight: 'bold' }}>1.</span> 
-                  <span style={{ color: '#000000' }}>A real GitHub account & LinkedIn profile.</span>
-                </li>
-                <li style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
-                  <span style={{ color: '#10B981', fontWeight: 'bold' }}>2.</span> 
-                  <span style={{ color: '#000000' }}>Real personal & group fullstack projects.</span>
-                </li>
-                <li style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
-                  <span style={{ color: '#10B981', fontWeight: 'bold' }}>3.</span> 
-                  <span style={{ color: '#000000' }}>A NovaNest verified skills badge.</span>
-                </li>
-                <li style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
-                  <span style={{ color: '#10B981', fontWeight: 'bold' }}>4.</span> 
-                  <span style={{ color: '#000000' }}>A chance to join Nova Labs to build real company projects and earn.</span>
-                </li>
-                <li style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
-                  <span style={{ color: '#10B981', fontWeight: 'bold' }}>5.</span> 
-                  <span style={{ color: '#000000' }}>Financial guidance from NovaFinance on how to handle and invest earnings early.</span>
-                </li>
-              </ul>
-            </div>
-
+            {/* ... Keep the rest of the parent dashboard items (grades, achievements, payment) ... */}
             {assignments.length > 0 && (
               <div style={{ background: 'white', padding: '2rem', borderRadius: '16px', marginBottom: '2rem', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
                 <h2 style={{ color: '#000000', fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '1rem' }}>Assignment Grades</h2>
@@ -150,17 +144,6 @@ export default function ParentDashboard() {
                 <div style={{ background: '#F9FAFB', padding: '1rem', borderRadius: '8px' }}>
                   <p style={{ color: '#000000', fontSize: '0.95rem', fontStyle: 'italic' }}>"{latestCall.feedback}"</p>
                 </div>
-              </div>
-            )}
-
-            {studentData.status === 'WEEK1_FREE' && (
-              <div style={{ background: 'white', padding: '2rem', borderRadius: '16px', border: '2px solid #10B981', marginBottom: '2rem' }}>
-                <h2 style={{ color: '#000000', fontSize: '1.4rem', fontWeight: 'bold', marginBottom: '1rem' }}>Week 1 - Free Onboarding</h2>
-                <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  <li style={{ display: 'flex', gap: '1rem', alignItems: 'center', background: '#F9FAFB', padding: '1rem', borderRadius: '8px' }}><input type="checkbox" style={{ width: '20px', height: '20px' }} /><span style={{ color: '#000000', fontWeight: 'bold' }}>Install VS Code on your laptop</span></li>
-                  <li style={{ display: 'flex', gap: '1rem', alignItems: 'center', background: '#F9FAFB', padding: '1rem', borderRadius: '8px' }}><input type="checkbox" style={{ width: '20px', height: '20px' }} /><span style={{ color: '#000000', fontWeight: 'bold' }}>Create a GitHub Account</span></li>
-                  <li style={{ display: 'flex', gap: '1rem', alignItems: 'center', background: '#F9FAFB', padding: '1rem', borderRadius: '8px' }}><input type="checkbox" style={{ width: '20px', height: '20px' }} /><span style={{ color: '#000000', fontWeight: 'bold' }}>Prepare a Notebook and Pen</span></li>
-                </ul>
               </div>
             )}
 

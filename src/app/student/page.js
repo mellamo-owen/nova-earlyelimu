@@ -16,9 +16,7 @@ export default function StudentDashboard() {
   const [submissionText, setSubmissionText] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  useEffect(() => { fetchData(); }, []);
 
   const fetchData = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -39,20 +37,14 @@ export default function StudentDashboard() {
     e.preventDefault();
     if (!activeLesson) return;
     setSubmitting(true);
-
     const { data: existing } = await supabase.from('assignments').select('id').eq('student_id', studentData.id).eq('lesson_id', activeLesson.id).single();
-
     if (existing) {
       await supabase.from('assignments').update({ submission_link: submissionLink, submission_text: submissionText, status: 'SUBMITTED' }).eq('id', existing.id);
     } else {
-      await supabase.from('assignments').insert([{
-        student_id: studentData.id, lesson_id: activeLesson.id, submission_link: submissionLink, submission_text: submissionText, status: 'SUBMITTED'
-      }]);
+      await supabase.from('assignments').insert([{ student_id: studentData.id, lesson_id: activeLesson.id, submission_link: submissionLink, submission_text: submissionText, status: 'SUBMITTED' }]);
     }
-
     alert('Assignment submitted successfully!');
-    setActiveLesson(null); setSubmissionLink(''); setSubmissionText('');
-    setSubmitting(false);
+    setActiveLesson(null); setSubmissionLink(''); setSubmissionText(''); setSubmitting(false);
   };
 
   const handleLogout = async () => {
@@ -74,33 +66,37 @@ export default function StudentDashboard() {
           <button onClick={handleLogout} style={{ background: '#1E3A8A', color: 'white', padding: '0.6rem 1.2rem', borderRadius: '8px', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>Logout</button>
         </div>
 
+        {/* PLACEHOLDER 5: BACKGROUND BANNER (Student Dashboard) */}
+        <div style={{ 
+          width: '100%', height: '120px', background: '#10B981', borderRadius: '16px', marginBottom: '2rem',
+          backgroundImage: 'url("/student-banner.jpg")', backgroundSize: 'cover', backgroundPosition: 'center',
+          display: 'flex', alignItems: 'center', padding: '0 2rem', position: 'relative', overflow: 'hidden'
+        }}>
+          {/* Fallback if no image is uploaded */}
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(16,185,129,0.8)', zIndex: 0 }}></div>
+          <div style={{ position: 'relative', zIndex: 1, color: 'white' }}>
+            <h2 style={{ fontSize: '1.3rem', fontWeight: 'bold' }}>Welcome to Class!</h2>
+            <p style={{ fontSize: '0.9rem' }}>Let's build something amazing today.</p>
+          </div>
+        </div>
+
         {/* STUDENT ID CARD */}
         {studentData?.status !== 'PENDING' && (
-          <div style={{ 
-            background: 'linear-gradient(135deg, #1E3A8A 0%, #000000 100%)', 
-            borderRadius: '16px', 
-            padding: '1.5rem', 
-            color: 'white',
-            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)',
-            position: 'relative',
-            overflow: 'hidden',
-            marginBottom: '2rem'
-          }}>
+          <div style={{ background: 'linear-gradient(135deg, #1E3A8A 0%, #000000 100%)', borderRadius: '16px', padding: '1.5rem', color: 'white', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)', position: 'relative', overflow: 'hidden', marginBottom: '2rem' }}>
             <div style={{ position: 'absolute', top: '-20px', right: '-20px', width: '100px', height: '100px', background: 'rgba(16,185,129,0.2)', borderRadius: '50%' }}></div>
-            
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', position: 'relative', zIndex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <div style={{ width: '30px', height: '30px', background: '#10B981', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', color: '#000' }}>N</div>
+                {/* PLACEHOLDER 6: LOGO (Student ID Card) */}
+                <img src="/logo.png" alt="Nova" style={{ width: '30px', height: '30px', borderRadius: '6px', objectFit: 'cover' }} onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} />
+                <div style={{ display: 'none', width: '30px', height: '30px', background: '#10B981', borderRadius: '6px', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', color: '#000' }}>N</div>
                 <span style={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Nova earlyElimu</span>
               </div>
               <span style={{ fontSize: '0.7rem', color: '#10B981', fontWeight: 'bold', letterSpacing: '1px' }}>STUDENT</span>
             </div>
-
             <div style={{ marginBottom: '1.5rem', position: 'relative', zIndex: 1 }}>
               <p style={{ fontSize: '0.7rem', color: '#9CA3AF', textTransform: 'uppercase', marginBottom: '0.2rem' }}>Name</p>
               <h2 style={{ fontSize: '1.4rem', fontWeight: 'bold', textTransform: 'capitalize' }}>{studentData.name}</h2>
             </div>
-
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', position: 'relative', zIndex: 1 }}>
               <div>
                 <p style={{ fontSize: '0.7rem', color: '#9CA3AF', textTransform: 'uppercase', marginBottom: '0.2rem' }}>Student ID</p>
@@ -122,53 +118,20 @@ export default function StudentDashboard() {
         <div style={{ background: '#1E3A8A', padding: '2rem', borderRadius: '16px', color: 'white', marginBottom: '2rem' }}>
           <h2 style={{ fontSize: '1.3rem', fontWeight: 'bold', marginBottom: '1rem', color: '#10B981' }}>What You Will Achieve By Week 8</h2>
           <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '0.8rem', fontSize: '0.95rem' }}>
-            <li style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
-              <span style={{ color: '#10B981', fontWeight: 'bold' }}>1.</span> 
-              <span>A real GitHub account & LinkedIn profile.</span>
-            </li>
-            <li style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
-              <span style={{ color: '#10B981', fontWeight: 'bold' }}>2.</span> 
-              <span>Real personal & group fullstack projects.</span>
-            </li>
-            <li style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
-              <span style={{ color: '#10B981', fontWeight: 'bold' }}>3.</span> 
-              <span>A NovaNest verified skills badge.</span>
-            </li>
-            <li style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
-              <span style={{ color: '#10B981', fontWeight: 'bold' }}>4.</span> 
-              <span>A chance to join Nova Labs to build real company projects and earn.</span>
-            </li>
-            <li style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
-              <span style={{ color: '#10B981', fontWeight: 'bold' }}>5.</span> 
-              <span>Financial guidance from NovaFinance on how to handle and invest your earnings early.</span>
-            </li>
+            <li style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}><span style={{ color: '#10B981', fontWeight: 'bold' }}>1.</span><span>A real GitHub account & LinkedIn profile.</span></li>
+            <li style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}><span style={{ color: '#10B981', fontWeight: 'bold' }}>2.</span><span>Real personal & group fullstack projects.</span></li>
+            <li style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}><span style={{ color: '#10B981', fontWeight: 'bold' }}>3.</span><span>A NovaNest verified skills badge.</span></li>
+            <li style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}><span style={{ color: '#10B981', fontWeight: 'bold' }}>4.</span><span>A chance to join Nova Labs to build real company projects and earn.</span></li>
+            <li style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}><span style={{ color: '#10B981', fontWeight: 'bold' }}>5.</span><span>Financial guidance from NovaFinance.</span></li>
           </ul>
         </div>
-
-        {announcements.length > 0 && (
-          <div style={{ marginBottom: '2rem' }}>
-            <h2 style={{ color: '#000000', fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '1rem' }}>Announcements</h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {announcements.map(a => (
-                <div key={a.id} style={{ background: '#F0FDF4', padding: '1rem', borderRadius: '8px', border: '1px solid #D1FAE5' }}>
-                  <p style={{ fontWeight: 'bold', color: '#065F46' }}>{a.title}</p>
-                  <p style={{ color: '#047857', fontSize: '0.9rem', marginTop: '0.2rem' }}>{a.message}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
 
         <div style={{ background: '#000000', padding: '2rem', borderRadius: '16px', color: 'white', marginBottom: '2rem' }}>
           <p style={{ color: '#9CA3AF', fontSize: '0.9rem', marginBottom: '0.5rem', textTransform: 'uppercase' }}>Next Class</p>
           {lessons.length > 0 ? (
             <>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
-                Week {lessons[0].week}: {lessons[0].title}
-              </h2>
-              <a href={lessons[0].meet_link || '#'} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', background: '#10B981', color: 'white', padding: '1rem 2rem', borderRadius: '8px', fontWeight: 'bold', fontSize: '1rem', textDecoration: 'none', marginTop: '1rem' }}>
-                JOIN GOOGLE MEET
-              </a>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>Week {lessons[0].week}: {lessons[0].title}</h2>
+              <a href={lessons[0].meet_link || '#'} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', background: '#10B981', color: 'white', padding: '1rem 2rem', borderRadius: '8px', fontWeight: 'bold', fontSize: '1rem', textDecoration: 'none', marginTop: '1rem' }}>JOIN GOOGLE MEET</a>
             </>
           ) : (
             <p style={{ color: '#9CA3AF' }}>Your teacher will post the next class soon.</p>
@@ -177,7 +140,6 @@ export default function StudentDashboard() {
 
         <div style={{ background: 'white', padding: '2rem', borderRadius: '16px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
           <h2 style={{ color: '#000000', fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '1rem' }}>My Lessons & Assignments</h2>
-          
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {lessons.map((lesson) => {
               const isLocked = lesson.week > 1 && studentData?.status !== 'APPROVED';
@@ -189,12 +151,8 @@ export default function StudentDashboard() {
                   </div>
                   {isLocked ? <span style={{ fontSize: '0.9rem', color: '#6B7280', fontWeight: 'bold' }}>Locked</span> : (
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      {lesson.video_url && (
-                        <a href={lesson.video_url} target="_blank" rel="noopener noreferrer" style={{ background: '#1E3A8A', color: 'white', padding: '0.5rem', borderRadius: '6px', fontWeight: 'bold', textDecoration: 'none', fontSize: '0.8rem' }}>Video</a>
-                      )}
-                      {lesson.assignment_task && (
-                        <button onClick={() => setActiveLesson(lesson)} style={{ background: '#10B981', color: 'white', padding: '0.5rem', borderRadius: '6px', fontWeight: 'bold', border: 'none', cursor: 'pointer', fontSize: '0.8rem' }}>Submit Work</button>
-                      )}
+                      {lesson.video_url && <a href={lesson.video_url} target="_blank" rel="noopener noreferrer" style={{ background: '#1E3A8A', color: 'white', padding: '0.5rem', borderRadius: '6px', fontWeight: 'bold', textDecoration: 'none', fontSize: '0.8rem' }}>Video</a>}
+                      {lesson.assignment_task && <button onClick={() => setActiveLesson(lesson)} style={{ background: '#10B981', color: 'white', padding: '0.5rem', borderRadius: '6px', fontWeight: 'bold', border: 'none', cursor: 'pointer', fontSize: '0.8rem' }}>Submit Work</button>}
                     </div>
                   )}
                 </div>
