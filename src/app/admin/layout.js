@@ -36,18 +36,15 @@ export default function AdminLayout({ children }) {
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#111827', color: '#F3F4F6', fontFamily: 'sans-serif', flexDirection: 'column' }}>
       
-      {/* MOBILE HEADER */}
       <div className="mobile-header" style={{ display: 'none', background: '#1F2937', padding: '1rem', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #374151' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <div style={{ width: '30px', height: '30px', background: '#10B981', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', color: '#000' }}>N</div>
           <span style={{ fontWeight: 'bold', fontSize: '1rem' }}>Nova Admin</span>
         </div>
         
-        {/* CSS HAMBURGER MENU */}
-        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '0.5rem', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-          <div style={{ width: '25px', height: '3px', background: 'white', borderRadius: '2px' }}></div>
-          <div style={{ width: '25px', height: '3px', background: 'white', borderRadius: '2px' }}></div>
-          <div style={{ width: '25px', height: '3px', background: 'white', borderRadius: '2px' }}></div>
+        {/* HTML ENTITY HAMBURGER (SAFE FROM EMOJI REMOVAL) */}
+        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} style={{ background: 'transparent', border: 'none', color: 'white', fontSize: '1.8rem', cursor: 'pointer', lineHeight: 1 }}>
+          &#9776;
         </button>
       </div>
 

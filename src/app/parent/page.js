@@ -80,11 +80,8 @@ export default function ParentDashboard() {
           <span style={{ fontWeight: '700', fontSize: '1.1rem', color: 'white' }}>Nova Parent</span>
         </div>
         
-        {/* CSS HAMBURGER MENU */}
-        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '0.5rem', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-          <div style={{ width: '25px', height: '3px', background: 'white', borderRadius: '2px' }}></div>
-          <div style={{ width: '25px', height: '3px', background: 'white', borderRadius: '2px' }}></div>
-          <div style={{ width: '25px', height: '3px', background: 'white', borderRadius: '2px' }}></div>
+        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} style={{ background: 'transparent', border: 'none', color: 'white', fontSize: '1.8rem', cursor: 'pointer', lineHeight: 1 }}>
+          &#9776;
         </button>
       </div>
 
