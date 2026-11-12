@@ -27,15 +27,15 @@ export default function StudentLayout({ children }) {
 
   const navItems = [
     { name: 'Dashboard', path: '/student' },
-    { name: 'My Classes', path: '/student/group' },
+    { name: 'Class Chat', path: '/student/group' }, // RENAMED
     { name: 'Assignments', path: '/student/assignments' },
-    { name: 'My ID Card', path: '/student/id-card' },
+    { name: 'My ID Card', path: '/student/id-card' }, // FIXED LINK
   ];
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#F3F4F6', fontFamily: 'sans-serif', flexDirection: 'column' }}>
       
-      {/* MOBILE HEADER (Hamburger) */}
+      {/* MOBILE HEADER */}
       <div className="mobile-header-student" style={{ display: 'none', background: '#1E293B', padding: '1rem', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #334155' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <div style={{ width: '30px', height: '30px', background: '#EF4444', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', color: 'white' }}>N</div>
