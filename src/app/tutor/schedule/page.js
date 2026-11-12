@@ -4,29 +4,47 @@ import { supabase } from '@/lib/supabase';
 
 export default function TutorSchedule() {
   const [lessons, setLessons] = useState([]);
+  
+  // Form State
   const [week, setWeek] = useState('1');
   const [title, setTitle] = useState('');
   const [classDate, setClassDate] = useState('');
   const [meetLink, setMeetLink] = useState('');
   const [assignmentTask, setAssignmentTask] = useState('');
   const [loading, setLoading] = useState(false);
-  const [pageLoading, setPageLoading] = useState(true);
 
-  useEffect(() => { fetchLessons(); }, []);
+  useEffect(() => {
+    fetchLessons();
+  }, []);
 
   const fetchLessons = async () => {
+    // Fetch in the background
     const { data } = await supabase.from('lessons').select('*').order('class_date', { ascending: true });
     if (data) setLessons(data);
-    setPageLoading(false);
   };
 
   const handleSchedule = async (e) => {
     e.preventDefault();
     setLoading(true);
     
-    // Convert local date string to ISO format for Supabase
     const isoDate = new Date(classDate).toISOString();
 
+    // 1. INSTANT UI UPDATE (Optimistic)
+    const newLesson = {
+      id: Date.now().toString(), // Temporary ID
+      week: parseInt(week),
+      title,
+      class_date: isoDate,
+      meet_link: meetLink,
+      assignment_task: assignmentTask
+    };
+    
+    setLessons(prev => [...prev, newLesson].sort((a, b) => new Date(a.class_date) - new Date(b.class_date)));
+    
+    // Clear form instantly
+    setTitle(''); setClassDate(''); setMeetLink(''); setAssignmentTask('');
+    
+    // 2. Send to Supabase in the background
     await supabase.from('lessons').insert([{
       week: parseInt(week), 
       title, 
@@ -35,21 +53,15 @@ export default function TutorSchedule() {
       assignment_task: assignmentTask
     }]);
     
-    setTitle(''); setClassDate(''); setMeetLink(''); setAssignmentTask('');
-    fetchLessons();
     setLoading(false);
-    alert('Class scheduled successfully! It is now visible to your students.');
   };
 
-  // Human-friendly date formatter
   const formatDate = (isoString) => {
     if (!isoString) return 'No date set';
     return new Date(isoString).toLocaleString([], { 
       weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' 
     });
   };
-
-  if (pageLoading) return <div style={{ color: '#94A3B8' }}>Loading schedule...</div>;
 
   return (
     <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
@@ -74,8 +86,8 @@ export default function TutorSchedule() {
           
           <textarea placeholder="Assignment Task (Optional)" value={assignmentTask} onChange={e => setAssignmentTask(e.target.value)} style={{ padding: '0.8rem', borderRadius: '8px', background: '#0F172A', color: 'white', border: '1px solid #334155' }} />
           
-          <button type="submit" disabled={loading} style={{ background: '#3B82F6', color: 'white', padding: '1rem', borderRadius: '8px', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>
-            {loading ? 'Scheduling...' : 'Schedule & Notify Students'}
+          <button type="submit" disabled={loading} style={{ background: '#3B82F6', color: 'white', padding: '1rem', borderRadius: '8px', fontWeight: 'bold', border: 'none', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1 }}>
+            {loading ? 'Saving...' : 'Schedule & Notify Students'}
           </button>
         </form>
       </div>
