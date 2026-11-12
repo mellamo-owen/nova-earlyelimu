@@ -25,12 +25,21 @@ export default function StudentDashboard() {
         const expiryDate = studentData.payment_expires_at ? new Date(studentData.payment_expires_at) : null;
         if (!expiryDate || expiryDate < now) setIsLocked(true);
 
+        // Fetch ALL lessons
         const { data: lessonData } = await supabase.from('lessons').select('*').order('week', { ascending: true });
-        if (lessonData) {
+        
+        if (lessonData && lessonData.length > 0) {
           setLessons(lessonData);
+          
+          // Find the next upcoming class
           const upcoming = lessonData.filter(l => l.class_date && new Date(l.class_date) > now).sort((a,b) => new Date(a.class_date) - new Date(b.class_date));
-          if (upcoming.length > 0) setNextClass(upcoming[0]);
-          else if (lessonData.length > 0) setNextClass(lessonData[0]);
+          
+          if (upcoming.length > 0) {
+            setNextClass(upcoming[0]);
+          } else {
+            // If no upcoming date, just show the last created lesson so the student sees the assignment/task
+            setNextClass(lessonData[lessonData.length - 1]);
+          }
         }
       }
       setLoading(false);
@@ -39,7 +48,7 @@ export default function StudentDashboard() {
   }, [router]);
 
   const formatDate = (isoString) => {
-    if (!isoString) return 'Date TBD';
+    if (!isoString) return 'Schedule TBD';
     return new Date(isoString).toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
   };
 
@@ -76,18 +85,23 @@ export default function StudentDashboard() {
         <div style={{ background: 'linear-gradient(135deg, #1E3A8A 0%, #111827 100%)', padding: '2rem', borderRadius: '20px', color: 'white', position: 'relative', overflow: 'hidden', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}>
           <div style={{ position: 'absolute', top: '-50px', right: '-50px', width: '150px', height: '150px', background: 'rgba(16, 185, 129, 0.2)', borderRadius: '50%', filter: 'blur(40px)' }}></div>
           <div style={{ position: 'relative', zIndex: 1 }}>
-            <p style={{ color: '#9CA3AF', fontSize: '0.85rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '1rem' }}>Next Class</p>
+            <p style={{ color: '#9CA3AF', fontSize: '0.85rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '1rem' }}>Latest Class</p>
             {nextClass ? (
               <>
                 <h2 style={{ fontSize: '1.5rem', fontWeight: '800', marginBottom: '0.5rem' }}>{nextClass.title}</h2>
-                <p style={{ color: '#10B981', fontSize: '0.95rem', marginBottom: '2rem', fontWeight: '500' }}>🗓️ {formatDate(nextClass.class_date)}</p>
+                <p style={{ color: '#10B981', fontSize: '0.95rem', marginBottom: '1rem', fontWeight: '500' }}>🗓️ {formatDate(nextClass.class_date)}</p>
+                {nextClass.assignment_task && (
+                  <p style={{ color: '#D1D5DB', fontSize: '0.9rem', marginBottom: '1.5rem', background: 'rgba(255,255,255,0.1)', padding: '0.5rem', borderRadius: '6px' }}>
+                    <strong>Task:</strong> {nextClass.assignment_task}
+                  </p>
+                )}
                 {!isLocked ? (
-                  <a href={nextClass.meet_link} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', background: '#10B981', color: 'white', padding: '0.8rem 2rem', borderRadius: '10px', fontWeight: '700', textDecoration: 'none', fontSize: '0.95rem', boxShadow: '0 4px 14px 0 rgba(16, 185, 129, 0.39)' }}>Join Class</a>
+                  <a href={nextClass.meet_link || '#'} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', background: '#10B981', color: 'white', padding: '0.8rem 2rem', borderRadius: '10px', fontWeight: '700', textDecoration: 'none', fontSize: '0.95rem', boxShadow: '0 4px 14px 0 rgba(16, 185, 129, 0.39)' }}>Join Class</a>
                 ) : (
                   <span style={{ display: 'inline-block', background: 'rgba(255, 255, 255, 0.1)', color: '#9CA3AF', padding: '0.8rem 2rem', borderRadius: '10px', fontWeight: '700', fontSize: '0.95rem' }}>Payment Required</span>
                 )}
               </>
-            ) : <p style={{ color: '#9CA3AF' }}>No upcoming classes.</p>}
+            ) : <p style={{ color: '#9CA3AF' }}>No classes posted by your tutor yet.</p>}
           </div>
         </div>
 
