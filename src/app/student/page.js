@@ -9,21 +9,17 @@ export default function StudentDashboard() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [studentData, setStudentData] = useState(null);
-  const [lessons, setLessons] = useState([]);
 
-  useEffect(() => { fetchData(); }, []);
-
-  const fetchData = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { router.push('/login'); return; }
-    const { data: student } = await supabase.from('students').select('*').eq('auth_user_id', user.id).single();
-    if (student) {
-      setStudentData(student);
-      const { data: lessonData } = await supabase.from('lessons').select('*').order('week', { ascending: true });
-      if (lessonData) setLessons(lessonData);
-    }
-    setLoading(false);
-  };
+  useEffect(() => {
+    const fetchData = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { router.push('/login'); return; }
+      const { data: student } = await supabase.from('students').select('*').eq('auth_user_id', user.id).single();
+      if (student) setStudentData(student);
+      setLoading(false);
+    };
+    fetchData();
+  }, [router]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -44,14 +40,18 @@ export default function StudentDashboard() {
           <button onClick={handleLogout} style={{ background: '#1E3A8A', color: 'white', padding: '0.6rem 1.2rem', borderRadius: '8px', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>Logout</button>
         </div>
 
+        {/* CALL ROOM LINK */}
+        <Link href="/student/call" style={{ display: 'block', background: '#1E3A8A', padding: '1.5rem', borderRadius: '16px', color: 'white', textDecoration: 'none', marginBottom: '2rem', textAlign: 'center', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
+          <h2 style={{ fontSize: '1.3rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>🎥 Enter 1-on-1 Call Room</h2>
+          <p style={{ fontSize: '0.9rem', color: '#93C5FD' }}>Click here to wait for your teacher's call.</p>
+        </Link>
+
         {/* CLASS GROUP LINK */}
         <Link href="/student/group" style={{ display: 'block', background: '#10B981', padding: '1.5rem', borderRadius: '16px', color: 'white', textDecoration: 'none', marginBottom: '2rem', boxShadow: '0 4px 6px rgba(16,185,129,0.3)' }}>
           <h2 style={{ fontSize: '1.3rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>💬 Join Class Group Chat</h2>
-          <p style={{ fontSize: '0.9rem' }}>Discuss assignments, ask questions, and send voice notes to your teacher and classmates.</p>
+          <p style={{ fontSize: '0.9rem' }}>Discuss assignments, ask questions, and send voice notes.</p>
         </Link>
 
-        {/* ID CARD AND LESSONS GO HERE (I left them out for brevity, but keep your existing code here) */}
-        
       </div>
     </main>
   );
