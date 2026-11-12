@@ -35,7 +35,7 @@ export default function StudentLayout({ children }) {
           <div style={{ width: '32px', height: '32px', background: '#1E3A8A', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', color: 'white', fontSize: '1rem' }}>N</div>
           <span style={{ fontWeight: '700', fontSize: '1.1rem', color: 'white' }}>Nova</span>
         </div>
-        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} style={{ background: '#374151', border: 'none', color: 'white', fontSize: '1.2rem', cursor: 'pointer', padding: '0.5rem', borderRadius: '8px' }}>☰</button>
+        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} style={{ background: '#374151', border: 'none', color: 'white', fontSize: '1.2rem', cursor: 'pointer', padding: '0.5rem', borderRadius: '8px' }}></button>
       </div>
 
       <div style={{ display: 'flex', flex: 1, flexDirection: 'row' }}>
@@ -96,3 +96,4 @@ export default function StudentLayout({ children }) {
     </div>
   );
 }
+

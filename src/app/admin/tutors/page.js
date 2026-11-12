@@ -77,7 +77,7 @@ export default function AdminTutors() {
           <div style={{ background: '#065F46', padding: '1.5rem', borderRadius: '12px', border: '1px solid #10B981', marginBottom: '2rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
               <h2 style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#10B981' }}>Tutor Created Successfully!</h2>
-              <button onClick={() => setCreatedTutor(null)} style={{ background: 'transparent', border: 'none', color: 'white', cursor: 'pointer', fontSize: '1.2rem' }}>✕</button>
+              <button onClick={() => setCreatedTutor(null)} style={{ background: 'transparent', border: 'none', color: 'white', cursor: 'pointer', fontSize: '1.2rem' }}></button>
             </div>
             <p style={{ color: '#D1FAE5', marginBottom: '1rem' }}>Copy and send this email to the tutor:</p>
             <textarea 
@@ -122,3 +122,4 @@ Nova earlyElimu`}
     </div>
   );
 }
+

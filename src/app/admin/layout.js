@@ -42,7 +42,7 @@ export default function AdminLayout({ children }) {
           <div style={{ width: '30px', height: '30px', background: '#10B981', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', color: '#000' }}>N</div>
           <span style={{ fontWeight: 'bold', fontSize: '1rem' }}>Nova Admin</span>
         </div>
-        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} style={{ background: 'transparent', border: 'none', color: 'white', fontSize: '1.5rem', cursor: 'pointer' }}>☰</button>
+        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} style={{ background: 'transparent', border: 'none', color: 'white', fontSize: '1.5rem', cursor: 'pointer' }}></button>
       </div>
 
       <div style={{ display: 'flex', flex: 1, flexDirection: 'row' }}>
@@ -90,3 +90,4 @@ export default function AdminLayout({ children }) {
     </div>
   );
 }
+

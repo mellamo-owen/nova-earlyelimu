@@ -60,7 +60,7 @@ export default function TutorLayout({ children }) {
           <div style={{ width: '30px', height: '30px', background: '#3B82F6', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>S</div>
           <span style={{ fontWeight: 'bold', fontSize: '1rem' }}>Smart Tutor</span>
         </div>
-        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} style={{ background: 'transparent', border: 'none', color: 'white', fontSize: '1.5rem', cursor: 'pointer' }}>☰</button>
+        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} style={{ background: 'transparent', border: 'none', color: 'white', fontSize: '1.5rem', cursor: 'pointer' }}></button>
       </div>
 
       <div style={{ display: 'flex', flex: 1, flexDirection: 'row' }}>
@@ -121,3 +121,4 @@ export default function TutorLayout({ children }) {
     </div>
   );
 }
+
