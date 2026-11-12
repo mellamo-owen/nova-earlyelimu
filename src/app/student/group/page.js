@@ -8,9 +8,6 @@ export default function StudentGroupChat() {
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState('');
   const [studentName, setStudentName] = useState('');
-  const [isPaid, setIsPaid] = useState(false);
-  const [loading, setLoading] = useState(true);
-  
   const [isRecording, setIsRecording] = useState(false);
   const [recordTime, setRecordTime] = useState(0);
   const mediaRecorderRef = useRef(null);
@@ -27,30 +24,18 @@ export default function StudentGroupChat() {
     if (!user) { router.push('/login'); return; }
     
     const { data } = await supabase.from('students').select('name, status').eq('auth_user_id', user.id).single();
-    
-    if (data?.status !== 'APPROVED') {
-      alert('You must pay to access the class group chat.');
-      router.push('/student');
-      return;
-    }
-    
-    setStudentName(data.name);
-    setIsPaid(true);
-    
-    // Only fetch the last 50 messages for SPEED
-    const { data: msgs } = await supabase.from('messages').select('*').order('created_at', { ascending: false }).limit(50);
-    if (msgs) setMessages(msgs.reverse());
+    if (data) setStudentName(data.name);
 
-    // Real-time listener
+    fetchMessages();
+
     const subscription = supabase.channel('public:messages')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
-        setMessages(prev => {
-          if (prev.find(m => m.id === payload.new.id)) return prev;
-          return [...prev, payload.new];
-        });
+        // ONLY add to UI if it is a public class message (no parent_id)
+        if (!payload.new.parent_id) {
+          setMessages(prev => [...prev, payload.new]);
+        }
       }).subscribe();
 
-    setLoading(false);
     return () => supabase.removeChannel(subscription);
   };
 
@@ -58,18 +43,18 @@ export default function StudentGroupChat() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  const fetchMessages = async () => {
+    // 🔥 FIX: Only fetch messages where parent_id is NULL
+    const { data } = await supabase.from('messages').select('*').is('parent_id', null).order('created_at', { ascending: true });
+    if (data) setMessages(data);
+  };
+
   const sendText = async (e) => {
     e.preventDefault();
     if (!text.trim()) return;
-    const tempId = Date.now().toString();
-    const newMsg = { id: tempId, sender_name: studentName, sender_role: 'student', text_content: text, created_at: new Date().toISOString() };
-    
-    // INSTANT UI UPDATE
-    setMessages(prev => [...prev, newMsg]);
+    const newMsg = { sender_name: studentName, sender_role: 'student', text_content: text };
     setText('');
-    
-    // BACKGROUND DB UPDATE
-    await supabase.from('messages').insert([{ sender_name: studentName, sender_role: 'student', text_content: text }]);
+    await supabase.from('messages').insert([newMsg]);
   };
 
   const startRecording = async () => {
@@ -110,23 +95,31 @@ export default function StudentGroupChat() {
     }
   };
 
-  if (loading) return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading Chat...</div>;
-  if (!isPaid) return null;
+  const formatTime = (isoString) => {
+    return new Date(isoString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
 
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto', height: 'calc(100vh - 100px)', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ background: '#1E293B', padding: '1rem', borderRadius: '12px 12px 0 0', borderBottom: '1px solid #334155', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ background: '#1F2937', padding: '1rem', borderRadius: '12px 12px 0 0', borderBottom: '1px solid #374151', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h1 style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'white' }}>Class Group Chat</h1>
-        <button onClick={() => router.push('/student')} style={{ background: '#334155', color: 'white', padding: '0.4rem 0.8rem', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '0.8rem' }}>Back</button>
+        <button onClick={() => router.push('/student')} style={{ background: '#374151', color: 'white', padding: '0.4rem 0.8rem', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '0.8rem' }}>Back</button>
       </div>
 
-      <div style={{ flex: 1, background: '#F9FAFB', padding: '1rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      <div style={{ flex: 1, background: '#111827', padding: '1rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        {messages.length === 0 && <p style={{ textAlign: 'center', color: '#9CA3AF', marginTop: '2rem' }}>No messages yet. Say hello to your class!</p>}
+        
         {messages.map(msg => (
           <div key={msg.id} style={{ alignSelf: msg.sender_role === 'student' ? 'flex-end' : 'flex-start', maxWidth: '80%' }}>
-            <p style={{ fontSize: '0.75rem', color: '#6B7280', marginBottom: '0.2rem', textAlign: msg.sender_role === 'student' ? 'right' : 'left' }}>
-              {msg.sender_name} {msg.sender_role === 'tutor' && '(Teacher)'}
+            <p style={{ fontSize: '0.75rem', color: '#9CA3AF', marginBottom: '0.2rem', textAlign: msg.sender_role === 'student' ? 'right' : 'left' }}>
+              {msg.sender_name} {msg.sender_role === 'tutor' && '(Teacher)'} • {formatTime(msg.created_at)}
             </p>
-            <div style={{ background: msg.sender_role === 'student' ? '#10B981' : '#E5E7EB', padding: '0.8rem', borderRadius: '12px', color: msg.sender_role === 'student' ? 'white' : 'black' }}>
+            <div style={{ 
+              background: msg.sender_role === 'student' ? '#1E3A8A' : '#374151', 
+              padding: '0.8rem', borderRadius: '12px', color: 'white',
+              borderBottomRightRadius: msg.sender_role === 'student' ? '0' : '12px',
+              borderBottomLeftRadius: msg.sender_role !== 'student' ? '0' : '12px',
+            }}>
               {msg.text_content && <p style={{ fontSize: '0.95rem' }}>{msg.text_content}</p>}
               {msg.audio_url && <audio controls src={msg.audio_url} style={{ width: '220px', height: '40px', marginTop: '0.5rem' }} />}
             </div>
@@ -135,18 +128,19 @@ export default function StudentGroupChat() {
         <div ref={messagesEndRef} />
       </div>
 
-      <div style={{ background: '#E5E7EB', padding: '1rem', borderRadius: '0 0 12px 12px', borderTop: '1px solid #D1D5DB' }}>
+      <div style={{ background: '#1F2937', padding: '1rem', borderRadius: '0 0 12px 12px', borderTop: '1px solid #374151' }}>
         <form onSubmit={sendText} style={{ display: 'flex', gap: '0.5rem' }}>
-          <input type="text" value={text} onChange={e => setText(e.target.value)} placeholder="Type a message..." style={{ flex: 1, padding: '0.8rem', borderRadius: '8px', border: '1px solid #D1D5DB', background: 'white', color: 'black' }} />
+          <input type="text" value={text} onChange={e => setText(e.target.value)} placeholder="Type a message..." style={{ flex: 1, padding: '0.8rem', borderRadius: '8px', border: '1px solid #374151', background: '#111827', color: 'white' }} />
+          
           {!isRecording ? (
-            <button type="button" onClick={startRecording} style={{ background: '#1E3A8A', color: 'white', padding: '0 1rem', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>🎤 Voice</button>
+            <button type="button" onClick={startRecording} style={{ background: '#374151', color: 'white', padding: '0 1rem', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>Voice</button>
           ) : (
-            <button type="button" onClick={stopRecording} style={{ background: '#EF4444', color: 'white', padding: '0 1rem', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>🛑 Stop ({recordTime}s)</button>
+            <button type="button" onClick={stopRecording} style={{ background: '#EF4444', color: 'white', padding: '0 1rem', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>Stop ({recordTime}s)</button>
           )}
-          <button type="submit" style={{ background: '#10B981', color: 'white', padding: '0 1.5rem', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>Send</button>
+          
+          <button type="submit" style={{ background: '#1E3A8A', color: 'white', padding: '0 1.5rem', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>Send</button>
         </form>
       </div>
     </div>
   );
 }
-
