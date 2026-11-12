@@ -36,8 +36,12 @@ export default function StudentGroupChat() {
     
     setStudentName(data.name);
     setIsPaid(true);
-    fetchMessages();
+    
+    // Only fetch the last 50 messages for SPEED
+    const { data: msgs } = await supabase.from('messages').select('*').order('created_at', { ascending: false }).limit(50);
+    if (msgs) setMessages(msgs.reverse());
 
+    // Real-time listener
     const subscription = supabase.channel('public:messages')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
         setMessages(prev => {
@@ -54,18 +58,17 @@ export default function StudentGroupChat() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const fetchMessages = async () => {
-    const { data } = await supabase.from('messages').select('*').order('created_at', { ascending: true });
-    if (data) setMessages(data);
-  };
-
   const sendText = async (e) => {
     e.preventDefault();
     if (!text.trim()) return;
     const tempId = Date.now().toString();
     const newMsg = { id: tempId, sender_name: studentName, sender_role: 'student', text_content: text, created_at: new Date().toISOString() };
+    
+    // INSTANT UI UPDATE
     setMessages(prev => [...prev, newMsg]);
     setText('');
+    
+    // BACKGROUND DB UPDATE
     await supabase.from('messages').insert([{ sender_name: studentName, sender_role: 'student', text_content: text }]);
   };
 
@@ -74,7 +77,6 @@ export default function StudentGroupChat() {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       let mimeType = 'audio/webm';
       if (MediaRecorder.isTypeSupported('audio/mp4')) mimeType = 'audio/mp4';
-      if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) mimeType = 'audio/webm;codecs=opus';
 
       mediaRecorderRef.current = new MediaRecorder(stream, { mimeType });
       audioChunksRef.current = [];
@@ -108,7 +110,7 @@ export default function StudentGroupChat() {
     }
   };
 
-  if (loading) return <div style={{ padding: '2rem', textAlign: 'center' }}>Checking access...</div>;
+  if (loading) return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading Chat...</div>;
   if (!isPaid) return null;
 
   return (
