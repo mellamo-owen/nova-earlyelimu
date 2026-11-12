@@ -28,23 +28,21 @@ export default function StudentLayout({ children }) {
   ];
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#F8FAFC', fontFamily: 'Inter, sans-serif', flexDirection: 'column' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', background: '#111827', fontFamily: 'Inter, sans-serif', flexDirection: 'column' }}>
       
-      {/* MOBILE HEADER */}
-      <div className="mobile-header-student" style={{ display: 'none', background: 'white', padding: '1rem', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #E2E8F0', position: 'sticky', top: 0, zIndex: 40 }}>
+      <div className="mobile-header-student" style={{ display: 'none', background: '#1F2937', padding: '1rem', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #374151', position: 'sticky', top: 0, zIndex: 40 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <div style={{ width: '32px', height: '32px', background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', color: 'white', fontSize: '1rem' }}>N</div>
-          <span style={{ fontWeight: '700', fontSize: '1.1rem', color: '#1E293B' }}>Nova</span>
+          <div style={{ width: '32px', height: '32px', background: '#1E3A8A', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', color: 'white', fontSize: '1rem' }}>N</div>
+          <span style={{ fontWeight: '700', fontSize: '1.1rem', color: 'white' }}>Nova</span>
         </div>
-        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} style={{ background: '#F1F5F9', border: 'none', color: '#1E293B', fontSize: '1.2rem', cursor: 'pointer', padding: '0.5rem', borderRadius: '8px' }}>☰</button>
+        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} style={{ background: '#374151', border: 'none', color: 'white', fontSize: '1.2rem', cursor: 'pointer', padding: '0.5rem', borderRadius: '8px' }}>☰</button>
       </div>
 
       <div style={{ display: 'flex', flex: 1, flexDirection: 'row' }}>
         
-        {/* SIDEBAR */}
-        <aside className={`sidebar-student ${isMobileMenuOpen ? 'open' : ''}`} style={{ width: '260px', background: 'white', color: '#1E293B', padding: '1.5rem', display: 'flex', flexDirection: 'column', borderRight: '1px solid #E2E8F0', flexShrink: 0 }}>
+        <aside className={`sidebar-student ${isMobileMenuOpen ? 'open' : ''}`} style={{ width: '260px', background: '#1F2937', color: 'white', padding: '1.5rem', display: 'flex', flexDirection: 'column', borderRight: '1px solid #374151', flexShrink: 0 }}>
           <div className="desktop-logo-student" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '3rem' }}>
-            <div style={{ width: '40px', height: '40px', background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', color: 'white', fontSize: '1.2rem' }}>N</div>
+            <div style={{ width: '40px', height: '40px', background: '#1E3A8A', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', color: 'white', fontSize: '1.2rem' }}>N</div>
             <span style={{ fontWeight: '800', fontSize: '1.2rem', letterSpacing: '-0.5px' }}>Nova Student</span>
           </div>
 
@@ -54,8 +52,8 @@ export default function StudentLayout({ children }) {
               return (
                 <Link key={item.name} href={item.path} onClick={() => setIsMobileMenuOpen(false)} style={{ 
                   display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.8rem 1rem', 
-                  background: isActive ? '#EFF6FF' : 'transparent', 
-                  borderRadius: '10px', color: isActive ? '#2563EB' : '#64748B', 
+                  background: isActive ? '#1E3A8A' : 'transparent', 
+                  borderRadius: '10px', color: isActive ? 'white' : '#9CA3AF', 
                   textDecoration: 'none', fontWeight: isActive ? '600' : '500', transition: 'all 0.2s'
                 }}>
                   <span style={{ fontSize: '1.1rem' }}>{item.icon}</span>
@@ -65,21 +63,20 @@ export default function StudentLayout({ children }) {
             })}
           </nav>
 
-          <div style={{ borderTop: '1px solid #E2E8F0', paddingTop: '1.5rem' }}>
+          <div style={{ borderTop: '1px solid #374151', paddingTop: '1.5rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
-              <div style={{ width: '36px', height: '36px', background: '#F1F5F9', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', color: '#64748B' }}>
+              <div style={{ width: '36px', height: '36px', background: '#374151', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', color: 'white' }}>
                 {student?.name?.charAt(0)}
               </div>
               <div>
-                <p style={{ fontSize: '0.9rem', fontWeight: '600', color: '#1E293B' }}>{student?.name}</p>
-                <p style={{ fontSize: '0.75rem', color: '#64748B' }}>{student?.student_id_code}</p>
+                <p style={{ fontSize: '0.9rem', fontWeight: '600', color: 'white' }}>{student?.name}</p>
+                <p style={{ fontSize: '0.75rem', color: '#9CA3AF' }}>{student?.student_id_code}</p>
               </div>
             </div>
-            <button onClick={async () => { await supabase.auth.signOut(); router.push('/login'); }} style={{ width: '100%', background: '#FEF2F2', border: 'none', color: '#EF4444', padding: '0.75rem', borderRadius: '10px', fontWeight: '600', cursor: 'pointer', transition: 'all 0.2s' }}>Log Out</button>
+            <button onClick={async () => { await supabase.auth.signOut(); router.push('/login'); }} style={{ width: '100%', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #EF4444', color: '#EF4444', padding: '0.75rem', borderRadius: '10px', fontWeight: '600', cursor: 'pointer', transition: 'all 0.2s' }}>Log Out</button>
           </div>
         </aside>
 
-        {/* MAIN CONTENT */}
         <main style={{ flex: 1, padding: '2rem', overflowY: 'auto', width: '100%' }}>
           <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
             {children}

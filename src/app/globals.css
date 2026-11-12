@@ -4,13 +4,12 @@
 
 :root {
   --emerald: #10B981;
-  --royal-blue: #1E3A8A;
+  --royal-blue: #3B82F6;
   --dark-grey: #111827;
   --dark-grey-light: #1F2937;
-  --bg-light: #F9FAFB;
-  --text-main: #111827;
-  --text-muted: #6B7280;
-  --white: #FFFFFF;
+  --dark-grey-lighter: #374151;
+  --text-main: #F9FAFB;
+  --text-muted: #9CA3AF;
 }
 
 * {
@@ -21,34 +20,16 @@
 
 html, body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: var(--bg-light);
+  background: var(--dark-grey);
   color: var(--text-main);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
 }
 
-a {
-  color: inherit;
-  text-decoration: none;
-}
+a { color: inherit; text-decoration: none; }
+button { cursor: pointer; font-family: inherit; border: none; }
 
-button {
-  cursor: pointer;
-  font-family: inherit;
-  border: none;
-}
-
-/* Custom Scrollbar to match the brand */
-::-webkit-scrollbar {
-  width: 8px;
-}
-::-webkit-scrollbar-track {
-  background: #f1f1f1; 
-}
-::-webkit-scrollbar-thumb {
-  background: #c1c1c1; 
-  border-radius: 4px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: var(--royal-blue); 
-}
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: #111827; }
+::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--emerald); }
