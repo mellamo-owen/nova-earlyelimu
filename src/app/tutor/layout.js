@@ -42,11 +42,10 @@ export default function TutorLayout({ children }) {
     router.push('/login');
   };
 
-  // TUTOR SEES ALL OF THIS
   const navItems = [
     { name: 'Dashboard', path: '/tutor' },
-    { name: 'Class Group Chat', path: '/tutor/group' }, // NEW
-    { name: 'Lessons & Videos', path: '/tutor/lessons' },
+    { name: 'Schedule Class', path: '/tutor/schedule' }, // <--- NEW LINK
+    { name: 'Class Group Chat', path: '/tutor/group' },
     { name: 'Assignments & Grading', path: '/tutor/grading' },
     { name: '1-on-1 Calls', path: '/tutor/calls' },
     { name: 'Group Projects', path: '/tutor/projects' },
