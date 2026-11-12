@@ -6,10 +6,12 @@ export default function TutorGroupChat() {
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState('');
   const [tutorName, setTutorName] = useState('');
+  
   const [isRecording, setIsRecording] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [recordTime, setRecordTime] = useState(0);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
+  const timerRef = useRef(null);
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
@@ -34,7 +36,6 @@ export default function TutorGroupChat() {
       const { data } = await supabase.from('tutors').select('name').eq('id', user.id).single();
       if (data) setTutorName(data.name);
     }
-    setLoading(false);
   };
 
   const fetchMessages = async () => {
@@ -45,15 +46,20 @@ export default function TutorGroupChat() {
   const sendText = async (e) => {
     e.preventDefault();
     if (!text.trim()) return;
-    const newMsg = { sender_name: tutorName, sender_role: 'tutor', text_content: text };
     setText('');
-    await supabase.from('messages').insert([newMsg]);
+    await supabase.from('messages').insert([{ sender_name: tutorName, sender_role: 'tutor', text_content: text }]);
   };
 
+  // --- VOICE RECORDING LOGIC ---
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorderRef.current = new MediaRecorder(stream);
+      
+      let mimeType = 'audio/webm';
+      if (MediaRecorder.isTypeSupported('audio/mp4')) mimeType = 'audio/mp4';
+      if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) mimeType = 'audio/webm;codecs=opus';
+
+      mediaRecorderRef.current = new MediaRecorder(stream, { mimeType });
       audioChunksRef.current = [];
 
       mediaRecorderRef.current.ondataavailable = (e) => {
@@ -61,26 +67,40 @@ export default function TutorGroupChat() {
       };
 
       mediaRecorderRef.current.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        const fileName = `voice-${Date.now()}.webm`;
+        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
+        const fileExt = mimeType.includes('mp4') ? 'mp4' : 'webm';
+        const fileName = `voice-${Date.now()}.${fileExt}`;
+        
         const { error } = await supabase.storage.from('chat-audio').upload(fileName, audioBlob);
         
         if (!error) {
           const { data: urlData } = supabase.storage.from('chat-audio').getPublicUrl(fileName);
           await supabase.from('messages').insert([{ sender_name: tutorName, sender_role: 'tutor', audio_url: urlData.publicUrl }]);
+        } else {
+          alert('Failed to upload voice note.');
         }
+        
+        stream.getTracks().forEach(track => track.stop());
       };
+
       mediaRecorderRef.current.start();
       setIsRecording(true);
+      setRecordTime(0);
+      
+      timerRef.current = setInterval(() => {
+        setRecordTime(prev => prev + 1);
+      }, 1000);
+
     } catch (err) {
-      alert('Microphone access denied. Please check your browser settings.');
+      alert('Microphone access denied.');
     }
   };
 
   const stopRecording = () => {
-    if (mediaRecorderRef.current) {
+    if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
+      clearInterval(timerRef.current);
     }
   };
 
@@ -88,24 +108,16 @@ export default function TutorGroupChat() {
     return new Date(isoString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
-  if (loading) return <div style={{ color: '#94A3B8', padding: '2rem' }}>Loading chat...</div>;
-
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto', height: 'calc(100vh - 120px)', display: 'flex', flexDirection: 'column' }}>
-      
       <div style={{ background: '#1E293B', padding: '1rem', borderRadius: '12px 12px 0 0', borderBottom: '1px solid #334155' }}>
-        <h1 style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>Class Group Chat</h1>
-        <p style={{ fontSize: '0.8rem', color: '#94A3B8' }}>Discuss assignments and send voice notes to your students.</p>
+        <h1 style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'white' }}>Class Group Chat</h1>
       </div>
 
       <div style={{ flex: 1, background: '#0F172A', padding: '1rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        
-        {/* HUMAN TOUCH: EMPTY STATE */}
         {messages.length === 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', opacity: 0.5 }}>
-            <div style={{ background: '#1E293B', padding: '1rem', borderRadius: '50%', marginBottom: '1rem' }}>💬</div>
             <p style={{ color: '#94A3B8', fontWeight: 'bold' }}>No messages yet.</p>
-            <p style={{ color: '#64748B', fontSize: '0.9rem' }}>Say hello to your students to start the conversation!</p>
           </div>
         )}
 
@@ -128,22 +140,30 @@ export default function TutorGroupChat() {
         <div ref={messagesEndRef} />
       </div>
 
-      <div style={{ background: '#1E293B', padding: '1rem', borderRadius: '0 0 12px 12px', borderTop: '1px solid #334155' }}>
-        <form onSubmit={sendText} style={{ display: 'flex', gap: '0.5rem', paddingBottom: 'env(safe-area-inset-bottom)' }}>
-          <input 
-            type="text" 
-            value={text} 
-            onChange={e => setText(e.target.value)} 
-            placeholder="Type a message..." 
-            style={{ flex: 1, padding: '0.8rem', borderRadius: '8px', border: '1px solid #334155', background: '#0F172A', color: 'white' }} 
-          />
-          <button type="button" onMouseDown={startRecording} onMouseUp={stopRecording} onTouchStart={startRecording} onTouchEnd={stopRecording} style={{ background: isRecording ? '#EF4444' : '#334155', color: 'white', padding: '0 1rem', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            {isRecording ? 'Recording...' : '🎤 Hold'}
-          </button>
+      <div style={{ background: '#1E293B', padding: '1rem', borderRadius: '0 0 12px 12px', borderTop: '1px solid #334155', paddingBottom: '2rem' }}>
+        <form onSubmit={sendText} style={{ display: 'flex', gap: '0.5rem' }}>
+          <input type="text" value={text} onChange={e => setText(e.target.value)} placeholder="Type a message..." style={{ flex: 1, padding: '0.8rem', borderRadius: '8px', border: '1px solid #334155', background: '#0F172A', color: 'white' }} />
+          
+          {!isRecording ? (
+            <button type="button" onClick={startRecording} style={{ background: '#334155', color: 'white', padding: '0 1rem', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              🎤 Voice Note
+            </button>
+          ) : (
+            <button type="button" onClick={stopRecording} style={{ background: '#EF4444', color: 'white', padding: '0 1rem', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.5rem', animation: 'pulse 1s infinite' }}>
+              🛑 Stop ({recordTime}s)
+            </button>
+          )}
+          
           <button type="submit" style={{ background: '#3B82F6', color: 'white', padding: '0 1.5rem', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>Send</button>
         </form>
+        <style>{`
+          @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+          }
+        `}</style>
       </div>
-
     </div>
   );
 }
