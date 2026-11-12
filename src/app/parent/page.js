@@ -69,34 +69,34 @@ export default function ParentDashboard() {
     setIsMobileMenuOpen(false);
   };
 
-  if (loading) return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading...</div>;
+  if (loading) return <div style={{ padding: '2rem', textAlign: 'center', color: '#1E3A8A' }}>Loading...</div>;
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#F8FAFC', fontFamily: 'Inter, sans-serif', flexDirection: 'column' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', background: '#F9FAFB', fontFamily: 'Inter, sans-serif', flexDirection: 'column' }}>
       
       {/* MOBILE HEADER */}
-      <div className="mobile-header-parent" style={{ display: 'none', background: 'white', padding: '1rem', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #E2E8F0', position: 'sticky', top: 0, zIndex: 40 }}>
+      <div className="mobile-header-parent" style={{ display: 'none', background: 'white', padding: '1rem', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #E5E7EB', position: 'sticky', top: 0, zIndex: 40 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <div style={{ width: '32px', height: '32px', background: 'linear-gradient(135deg, #1E3A8A, #000)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', color: 'white', fontSize: '1rem' }}>N</div>
-          <span style={{ fontWeight: '700', fontSize: '1.1rem', color: '#1E293B' }}>Nova Parent</span>
+          <div style={{ width: '32px', height: '32px', background: '#1E3A8A', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', color: 'white', fontSize: '1rem' }}>N</div>
+          <span style={{ fontWeight: '700', fontSize: '1.1rem', color: '#111827' }}>Nova Parent</span>
         </div>
-        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} style={{ background: '#F1F5F9', border: 'none', color: '#1E293B', fontSize: '1.2rem', cursor: 'pointer', padding: '0.5rem', borderRadius: '8px' }}>☰</button>
+        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} style={{ background: '#F3F4F6', border: 'none', color: '#111827', fontSize: '1.2rem', cursor: 'pointer', padding: '0.5rem', borderRadius: '8px' }}>☰</button>
       </div>
 
       <div style={{ display: 'flex', flex: 1, flexDirection: 'row' }}>
         
         {/* SIDEBAR */}
-        <aside className={`sidebar-parent ${isMobileMenuOpen ? 'open' : ''}`} style={{ width: '260px', background: 'white', padding: '1.5rem', borderRight: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
+        <aside className={`sidebar-parent ${isMobileMenuOpen ? 'open' : ''}`} style={{ width: '260px', background: 'white', padding: '1.5rem', borderRight: '1px solid #E5E7EB', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
           
           <div className="desktop-logo-parent" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '3rem' }}>
-            <div style={{ width: '40px', height: '40px', background: 'linear-gradient(135deg, #1E3A8A, #000)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', color: 'white', fontSize: '1.2rem' }}>N</div>
-            <span style={{ fontWeight: '800', fontSize: '1.2rem', letterSpacing: '-0.5px', color: '#0F172A' }}>Nova Parent</span>
+            <div style={{ width: '40px', height: '40px', background: '#1E3A8A', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', color: 'white', fontSize: '1.2rem' }}>N</div>
+            <span style={{ fontWeight: '800', fontSize: '1.2rem', letterSpacing: '-0.5px', color: '#111827' }}>Nova Parent</span>
           </div>
 
           <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
-            <button onClick={() => handleTabChange('overview')} style={{ textAlign: 'left', padding: '0.8rem 1rem', borderRadius: '10px', background: activeTab === 'overview' ? '#F1F5F9' : 'transparent', color: activeTab === 'overview' ? '#0F172A' : '#64748B', border: 'none', cursor: 'pointer', fontWeight: '600' }}>Overview</button>
-            <button onClick={() => handleTabChange('results')} style={{ textAlign: 'left', padding: '0.8rem 1rem', borderRadius: '10px', background: activeTab === 'results' ? '#F1F5F9' : 'transparent', color: activeTab === 'results' ? '#0F172A' : '#64748B', border: 'none', cursor: 'pointer', fontWeight: '600' }}>Graded Results</button>
-            <button onClick={() => handleTabChange('chat')} style={{ textAlign: 'left', padding: '0.8rem 1rem', borderRadius: '10px', background: activeTab === 'chat' ? '#F1F5F9' : 'transparent', color: activeTab === 'chat' ? '#0F172A' : '#64748B', border: 'none', cursor: 'pointer', fontWeight: '600' }}>Messages</button>
+            <button onClick={() => handleTabChange('overview')} style={{ textAlign: 'left', padding: '0.8rem 1rem', borderRadius: '10px', background: activeTab === 'overview' ? '#F3F4F6' : 'transparent', color: activeTab === 'overview' ? '#1E3A8A' : '#6B7280', border: 'none', cursor: 'pointer', fontWeight: '600' }}>Overview</button>
+            <button onClick={() => handleTabChange('results')} style={{ textAlign: 'left', padding: '0.8rem 1rem', borderRadius: '10px', background: activeTab === 'results' ? '#F3F4F6' : 'transparent', color: activeTab === 'results' ? '#1E3A8A' : '#6B7280', border: 'none', cursor: 'pointer', fontWeight: '600' }}>Graded Results</button>
+            <button onClick={() => handleTabChange('chat')} style={{ textAlign: 'left', padding: '0.8rem 1rem', borderRadius: '10px', background: activeTab === 'chat' ? '#F3F4F6' : 'transparent', color: activeTab === 'chat' ? '#1E3A8A' : '#6B7280', border: 'none', cursor: 'pointer', fontWeight: '600' }}>Messages</button>
           </nav>
 
           <button onClick={async () => { await supabase.auth.signOut(); router.push('/login'); }} style={{ background: '#FEF2F2', color: '#EF4444', padding: '0.8rem', borderRadius: '10px', fontWeight: '600', border: 'none', cursor: 'pointer', marginTop: 'auto' }}>Log Out</button>
@@ -108,17 +108,17 @@ export default function ParentDashboard() {
             
             {activeTab === 'overview' && (
               <div>
-                <h2 style={{ fontSize: '1.8rem', fontWeight: '800', color: '#0F172A', marginBottom: '1.5rem' }}>Welcome, {parentData?.name}</h2>
+                <h2 style={{ fontSize: '1.8rem', fontWeight: '800', color: '#111827', marginBottom: '1.5rem' }}>Welcome, {parentData?.name}</h2>
                 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
                   
                   {/* STATUS CARD */}
-                  <div style={{ background: 'white', padding: '2rem', borderRadius: '20px', border: '1px solid #E2E8F0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
-                    <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#0F172A', marginBottom: '1rem' }}>Student Profile</h3>
-                    <p style={{ fontSize: '1.5rem', fontWeight: '800', color: '#1E293B', marginBottom: '0.5rem' }}>{studentData?.name}</p>
-                    <p style={{ color: '#64748B', fontWeight: '500' }}>ID: {studentData?.student_id_code}</p>
+                  <div style={{ background: 'white', padding: '2rem', borderRadius: '20px', border: '1px solid #E5E7EB', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#111827', marginBottom: '1rem' }}>Student Profile</h3>
+                    <p style={{ fontSize: '1.5rem', fontWeight: '800', color: '#1E3A8A', marginBottom: '0.5rem' }}>{studentData?.name}</p>
+                    <p style={{ color: '#6B7280', fontWeight: '500' }}>ID: {studentData?.student_id_code}</p>
                     
-                    <div style={{ marginTop: '1.5rem', padding: '1rem', borderRadius: '12px', background: isLocked ? '#FEF2F2' : '#ECFDF5', border: `1px solid ${isLocked ? '#FCA5A5' : '#A7F3D0'}` }}>
+                    <div style={{ marginTop: '1.5rem', padding: '1rem', borderRadius: '12px', background: isLocked ? '#FEF2F2' : '#ECFDF5', border: `1px solid ${isLocked ? '#FCA5A5' : '#10B981'}` }}>
                       <p style={{ color: isLocked ? '#B91C1C' : '#047857', fontWeight: '700', fontSize: '0.95rem' }}>
                         {isLocked ? '🔒 Payment Required' : '✅ Account Active'}
                       </p>
@@ -129,10 +129,10 @@ export default function ParentDashboard() {
                   </div>
 
                   {/* PAYMENT CARD */}
-                  <div style={{ background: 'linear-gradient(135deg, #1E3A8A, #0F172A)', padding: '2rem', borderRadius: '20px', color: 'white', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}>
+                  <div style={{ background: '#1E3A8A', padding: '2rem', borderRadius: '20px', color: 'white', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}>
                     <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '1rem' }}>Payments</h3>
                     <p style={{ color: '#93C5FD', fontSize: '0.9rem', marginBottom: '1.5rem' }}>Unlock the next week or the full 8 weeks.</p>
-                    <button onClick={() => router.push('/payment')} style={{ background: '#3B82F6', color: 'white', padding: '0.8rem 1.5rem', borderRadius: '10px', fontWeight: '700', border: 'none', cursor: 'pointer', width: '100%' }}>Make Payment</button>
+                    <button onClick={() => router.push('/payment')} style={{ background: '#10B981', color: 'white', padding: '0.8rem 1.5rem', borderRadius: '10px', fontWeight: '700', border: 'none', cursor: 'pointer', width: '100%' }}>Make Payment</button>
                   </div>
                 </div>
               </div>
@@ -140,39 +140,39 @@ export default function ParentDashboard() {
 
             {activeTab === 'results' && (
               <div>
-                <h2 style={{ fontSize: '1.8rem', fontWeight: '800', color: '#0F172A', marginBottom: '1.5rem' }}>Graded Results</h2>
-                <div style={{ background: 'white', borderRadius: '20px', border: '1px solid #E2E8F0', overflow: 'hidden' }}>
+                <h2 style={{ fontSize: '1.8rem', fontWeight: '800', color: '#111827', marginBottom: '1.5rem' }}>Graded Results</h2>
+                <div style={{ background: 'white', borderRadius: '20px', border: '1px solid #E5E7EB', overflow: 'hidden' }}>
                   {assignments.map(a => (
-                    <div key={a.id} style={{ padding: '1.5rem', borderBottom: '1px solid #F1F5F9' }}>
-                      <p style={{ fontWeight: '700', color: '#0F172A', fontSize: '1.1rem' }}>Week {a.lessons?.week}: {a.lessons?.title}</p>
+                    <div key={a.id} style={{ padding: '1.5rem', borderBottom: '1px solid #E5E7EB' }}>
+                      <p style={{ fontWeight: '700', color: '#111827', fontSize: '1.1rem' }}>Week {a.lessons?.week}: {a.lessons?.title}</p>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.5rem' }}>
-                        <span style={{ background: '#ECFDF5', color: '#047857', padding: '0.2rem 0.6rem', borderRadius: '6px', fontWeight: '700', fontSize: '0.85rem' }}>Mark: {a.mark || 'Pending'}</span>
+                        <span style={{ background: '#ECFDF5', color: '#047857', padding: '0.2rem 0.6rem', borderRadius: '6px', fontWeight: '700', fontSize: '0.85rem', border: '1px solid #10B981' }}>Mark: {a.mark || 'Pending'}</span>
                       </div>
-                      <p style={{ color: '#64748B', fontStyle: 'italic', marginTop: '0.5rem', fontSize: '0.95rem' }}>"{a.teacher_comment}"</p>
+                      <p style={{ color: '#6B7280', fontStyle: 'italic', marginTop: '0.5rem', fontSize: '0.95rem' }}>"{a.teacher_comment}"</p>
                     </div>
                   ))}
-                  {assignments.length === 0 && <p style={{ padding: '2rem', textAlign: 'center', color: '#64748B' }}>No grades posted yet.</p>}
+                  {assignments.length === 0 && <p style={{ padding: '2rem', textAlign: 'center', color: '#6B7280' }}>No grades posted yet.</p>}
                 </div>
               </div>
             )}
 
             {activeTab === 'chat' && (
               <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 150px)' }}>
-                <h2 style={{ fontSize: '1.8rem', fontWeight: '800', color: '#0F172A', marginBottom: '1.5rem' }}>Messages with Tutor</h2>
-                <div style={{ flex: 1, background: 'white', borderRadius: '20px', border: '1px solid #E2E8F0', padding: '1.5rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <h2 style={{ fontSize: '1.8rem', fontWeight: '800', color: '#111827', marginBottom: '1.5rem' }}>Messages with Tutor</h2>
+                <div style={{ flex: 1, background: 'white', borderRadius: '20px', border: '1px solid #E5E7EB', padding: '1.5rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                   {messages.map(m => (
                     <div key={m.id} style={{ alignSelf: m.sender_role === 'parent' ? 'flex-end' : 'flex-start', maxWidth: '75%' }}>
-                      <p style={{ fontSize: '0.75rem', color: '#64748B', marginBottom: '0.2rem', textAlign: m.sender_role === 'parent' ? 'right' : 'left' }}>{m.sender_name}</p>
-                      <div style={{ background: m.sender_role === 'parent' ? '#1E3A8A' : '#F1F5F9', color: m.sender_role === 'parent' ? 'white' : '#0F172A', padding: '0.8rem 1rem', borderRadius: '12px' }}>
+                      <p style={{ fontSize: '0.75rem', color: '#6B7280', marginBottom: '0.2rem', textAlign: m.sender_role === 'parent' ? 'right' : 'left' }}>{m.sender_name}</p>
+                      <div style={{ background: m.sender_role === 'parent' ? '#1E3A8A' : '#F3F4F6', color: m.sender_role === 'parent' ? 'white' : '#111827', padding: '0.8rem 1rem', borderRadius: '12px' }}>
                         <p>{m.text_content}</p>
                       </div>
                     </div>
                   ))}
-                  {messages.length === 0 && <p style={{ textAlign: 'center', color: '#64748B', marginTop: '2rem' }}>No messages yet. Say hello to your child's tutor!</p>}
+                  {messages.length === 0 && <p style={{ textAlign: 'center', color: '#6B7280', marginTop: '2rem' }}>No messages yet. Say hello to your child's tutor!</p>}
                   <div ref={messagesEndRef} />
                 </div>
                 <form onSubmit={handleSendMessage} style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
-                  <input type="text" value={newMessage} onChange={e => setNewMessage(e.target.value)} placeholder="Type a message..." style={{ flex: 1, padding: '1rem', borderRadius: '12px', border: '1px solid #E2E8F0', outline: 'none' }} />
+                  <input type="text" value={newMessage} onChange={e => setNewMessage(e.target.value)} placeholder="Type a message..." style={{ flex: 1, padding: '1rem', borderRadius: '12px', border: '1px solid #E5E7EB', outline: 'none' }} />
                   <button type="submit" style={{ background: '#1E3A8A', color: 'white', padding: '0 2rem', borderRadius: '12px', border: 'none', fontWeight: '700', cursor: 'pointer' }}>Send</button>
                 </form>
               </div>
