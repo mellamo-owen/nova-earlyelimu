@@ -10,33 +10,18 @@ export default function TutorGrading() {
   const [loading, setLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
 
-  useEffect(() => { 
-    fetchMySubmissions(); 
-  }, []);
+  useEffect(() => { fetchMySubmissions(); }, []);
 
   const fetchMySubmissions = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    // 1. Get only students assigned to THIS tutor
-    const { data: myStudents } = await supabase
-      .from('students')
-      .select('id')
-      .eq('tutor_id', user.id);
-
+    const { data: myStudents } = await supabase.from('students').select('id').eq('tutor_id', user.id);
     if (myStudents && myStudents.length > 0) {
       const studentIds = myStudents.map(s => s.id);
-
-      // 2. Get assignments ONLY for those students
-      const { data } = await supabase
-        .from('assignments')
-        .select('*, students(name, student_id_code), lessons(title, week)')
-        .in('student_id', studentIds)
-        .order('created_at', { ascending: false });
-
+      const { data } = await supabase.from('assignments').select('*, students(name, student_id_code), lessons(title, week)').in('student_id', studentIds).order('created_at', { ascending: false });
       if (data) setSubmissions(data);
     }
-    
     setPageLoading(false);
   };
 
@@ -49,7 +34,7 @@ export default function TutorGrading() {
     setLoading(false);
   };
 
-  if (pageLoading) return <div style={{ color: '#94A3B8' }}>Loading submissions...</div>;
+  if (pageLoading) return <div style={{ color: '#94A3B8', padding: '2rem' }}>Loading submissions...</div>;
 
   return (
     <div>
@@ -58,44 +43,50 @@ export default function TutorGrading() {
         <p style={{ color: '#94A3B8', fontSize: '0.9rem' }}>Click "View Work" to open their GitHub repo, then click "Grade" to mark it.</p>
       </div>
 
-      <div style={{ background: '#1E293B', borderRadius: '12px', overflowX: 'auto', border: '1px solid #334155' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '600px' }}>
-          <thead style={{ background: '#0F172A', color: '#94A3B8', fontSize: '0.85rem', textTransform: 'uppercase' }}>
-            <tr>
-              <th style={{ padding: '1rem' }}>Student</th>
-              <th style={{ padding: '1rem' }}>Lesson</th>
-              <th style={{ padding: '1rem' }}>Submission</th>
-              <th style={{ padding: '1rem' }}>Status</th>
-              <th style={{ padding: '1rem' }}>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {submissions.map(sub => (
-              <tr key={sub.id} style={{ borderBottom: '1px solid #334155' }}>
-                <td style={{ padding: '1rem' }}>
-                  <p style={{ fontWeight: 'bold' }}>{sub.students?.name}</p>
-                  <p style={{ fontSize: '0.8rem', color: '#94A3B8' }}>{sub.students?.student_id_code}</p>
-                </td>
-                <td style={{ padding: '1rem', fontSize: '0.9rem' }}>Week {sub.lessons?.week}: {sub.lessons?.title}</td>
-                <td style={{ padding: '1rem' }}>
-                  <a href={sub.submission_link} target="_blank" rel="noopener noreferrer" style={{ color: '#3B82F6', fontWeight: 'bold', textDecoration: 'none' }}>View Work</a>
-                </td>
-                <td style={{ padding: '1rem' }}>
-                  <span style={{ color: sub.status === 'GRADED' ? '#10B981' : '#F59E0B', fontWeight: 'bold' }}>
-                    {sub.status} {sub.mark && `(${sub.mark})`}
-                  </span>
-                </td>
-                <td style={{ padding: '1rem' }}>
-                  <button onClick={() => { setActiveSub(sub); setMark(sub.mark || ''); setComment(sub.teacher_comment || ''); }} style={{ background: '#3B82F6', color: 'white', padding: '0.4rem 0.8rem', borderRadius: '6px', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>Grade</button>
-                </td>
+      {submissions.length === 0 ? (
+        /* HUMAN TOUCH: EMPTY STATE */
+        <div style={{ background: '#1E293B', padding: '3rem', borderRadius: '16px', border: '1px solid #334155', textAlign: 'center' }}>
+          <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>📝</div>
+          <h3 style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#F8FAFC', marginBottom: '0.5rem' }}>All caught up!</h3>
+          <p style={{ color: '#94A3B8', fontSize: '0.9rem' }}>None of your students have submitted assignments yet. Check back later.</p>
+        </div>
+      ) : (
+        <div style={{ background: '#1E293B', borderRadius: '12px', overflowX: 'auto', border: '1px solid #334155' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '600px' }}>
+            <thead style={{ background: '#0F172A', color: '#94A3B8', fontSize: '0.85rem', textTransform: 'uppercase' }}>
+              <tr>
+                <th style={{ padding: '1rem' }}>Student</th>
+                <th style={{ padding: '1rem' }}>Lesson</th>
+                <th style={{ padding: '1rem' }}>Submission</th>
+                <th style={{ padding: '1rem' }}>Status</th>
+                <th style={{ padding: '1rem' }}>Action</th>
               </tr>
-            ))}
-            {submissions.length === 0 && (
-              <tr><td colSpan="5" style={{ padding: '2rem', textAlign: 'center', color: '#94A3B8' }}>No submissions from your students yet.</td></tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {submissions.map(sub => (
+                <tr key={sub.id} style={{ borderBottom: '1px solid #334155' }}>
+                  <td style={{ padding: '1rem' }}>
+                    <p style={{ fontWeight: 'bold' }}>{sub.students?.name}</p>
+                    <p style={{ fontSize: '0.8rem', color: '#94A3B8' }}>{sub.students?.student_id_code}</p>
+                  </td>
+                  <td style={{ padding: '1rem', fontSize: '0.9rem' }}>Week {sub.lessons?.week}: {sub.lessons?.title}</td>
+                  <td style={{ padding: '1rem' }}>
+                    <a href={sub.submission_link} target="_blank" rel="noopener noreferrer" style={{ color: '#3B82F6', fontWeight: 'bold', textDecoration: 'none' }}>View Work</a>
+                  </td>
+                  <td style={{ padding: '1rem' }}>
+                    <span style={{ color: sub.status === 'GRADED' ? '#10B981' : '#F59E0B', fontWeight: 'bold' }}>
+                      {sub.status} {sub.mark && `(${sub.mark})`}
+                    </span>
+                  </td>
+                  <td style={{ padding: '1rem' }}>
+                    <button onClick={() => { setActiveSub(sub); setMark(sub.mark || ''); setComment(sub.teacher_comment || ''); }} style={{ background: '#3B82F6', color: 'white', padding: '0.4rem 0.8rem', borderRadius: '6px', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>Grade</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {/* GRADING MODAL */}
       {activeSub && (
@@ -106,11 +97,13 @@ export default function TutorGrading() {
             <p style={{ color: '#94A3B8', fontSize: '0.8rem', marginBottom: '1.5rem' }}>{activeSub.lessons?.title}</p>
             
             <form onSubmit={handleGrade} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <input type="text" placeholder="Mark (e.g. 8/10 or Excellent)" required value={mark} onChange={e => setMark(e.target.value)} style={{ padding: '0.8rem', borderRadius: '8px', background: '#0F172A', color: 'white', border: '1px solid #334155' }} />
+              <input type="text" placeholder="Mark (e.g. 8/10)" required value={mark} onChange={e => setMark(e.target.value)} style={{ padding: '0.8rem', borderRadius: '8px', background: '#0F172A', color: 'white', border: '1px solid #334155' }} />
               <textarea placeholder="Teacher Comment" required value={comment} onChange={e => setComment(e.target.value)} style={{ padding: '0.8rem', borderRadius: '8px', background: '#0F172A', color: 'white', border: '1px solid #334155' }} />
               <div style={{ display: 'flex', gap: '1rem' }}>
                 <button type="button" onClick={() => setActiveSub(null)} style={{ flex: 1, padding: '0.8rem', borderRadius: '8px', background: '#334155', color: 'white', border: 'none', cursor: 'pointer' }}>Cancel</button>
-                <button type="submit" disabled={loading} style={{ flex: 1, padding: '0.8rem', borderRadius: '8px', background: '#10B981', color: 'white', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>Save Grade</button>
+                <button type="submit" disabled={loading} style={{ flex: 1, padding: '0.8rem', borderRadius: '8px', background: '#10B981', color: 'white', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>
+                  {loading ? 'Saving...' : 'Save Grade'}
+                </button>
               </div>
             </form>
           </div>
