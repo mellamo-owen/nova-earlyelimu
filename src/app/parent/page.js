@@ -6,13 +6,15 @@ import { useRouter } from 'next/navigation';
 
 export default function ParentDashboard() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState('overview'); // overview, results, chat
+  const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(true);
   const [parentData, setParentData] = useState(null);
   const [studentData, setStudentData] = useState(null);
   const [assignments, setAssignments] = useState([]);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
+  const [isLocked, setIsLocked] = useState(false);
+  const [daysLeft, setDaysLeft] = useState(0);
 
   useEffect(() => {
     fetchData();
@@ -29,11 +31,22 @@ export default function ParentDashboard() {
     if (student) {
       setStudentData(student);
       
-      // Fetch grades
+      // 🛑 THE PERFECT LOCK LOGIC
+      const now = new Date();
+      const expiryDate = student.payment_expires_at ? new Date(student.payment_expires_at) : null;
+      
+      if (expiryDate && expiryDate > now) {
+        setIsLocked(false);
+        const diffTime = Math.abs(expiryDate - now);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        setDaysLeft(diffDays);
+      } else {
+        setIsLocked(true);
+      }
+
       const { data: assignmentData } = await supabase.from('assignments').select('*, lessons(title, week)').eq('student_id', student.id).order('created_at', { ascending: false });
       if (assignmentData) setAssignments(assignmentData);
 
-      // Fetch chat messages
       const { data: chatData } = await supabase.from('messages').select('*').order('created_at', { ascending: true });
       if (chatData) setMessages(chatData);
     }
@@ -50,7 +63,6 @@ export default function ParentDashboard() {
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#F9FAFB' }}>
       
-      {/* SIDEBAR */}
       <aside style={{ width: '250px', background: 'white', padding: '1.5rem', borderRight: '1px solid #E5E7EB', display: 'flex', flexDirection: 'column' }}>
         <h1 style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#1E3A8A', marginBottom: '2rem' }}>Nova Parent</h1>
         <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
@@ -61,16 +73,28 @@ export default function ParentDashboard() {
         <button onClick={handleLogout} style={{ background: '#EF4444', color: 'white', padding: '0.75rem', borderRadius: '8px', fontWeight: 'bold', border: 'none', cursor: 'pointer', marginTop: 'auto' }}>Logout</button>
       </aside>
 
-      {/* MAIN CONTENT */}
       <main style={{ flex: 1, padding: '2rem' }}>
         
         {activeTab === 'overview' && (
           <div>
             <h2 style={{ fontSize: '1.8rem', fontWeight: 'bold', marginBottom: '1rem' }}>Welcome, {parentData?.name}</h2>
+            
+            {/* PAYMENT STATUS BANNER */}
+            {isLocked ? (
+              <div style={{ background: '#FEF2F2', border: '2px solid #EF4444', padding: '1.5rem', borderRadius: '12px', marginBottom: '1rem' }}>
+                <h3 style={{ color: '#B91C1C', fontWeight: 'bold', fontSize: '1.2rem' }}>Payment Required 🔒</h3>
+                <p style={{ color: '#7F1D1D' }}>Your child's access has expired. Please pay to unlock the next week or 8 weeks.</p>
+              </div>
+            ) : (
+              <div style={{ background: '#F0FDF4', border: '1px solid #10B981', padding: '1.5rem', borderRadius: '12px', marginBottom: '1rem' }}>
+                <h3 style={{ color: '#065F46', fontWeight: 'bold', fontSize: '1.2rem' }}>Active ✅</h3>
+                <p style={{ color: '#047857' }}>Your child has <strong>{daysLeft} days</strong> of access remaining.</p>
+              </div>
+            )}
+
             <div style={{ background: '#1E3A8A', padding: '2rem', borderRadius: '16px', color: 'white' }}>
               <h3 style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>Student: {studentData?.name}</h3>
               <p>ID: {studentData?.student_id_code}</p>
-              <p>Status: {studentData?.status}</p>
             </div>
           </div>
         )}
@@ -79,7 +103,7 @@ export default function ParentDashboard() {
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
               <h2 style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>Graded Results</h2>
-              <button style={{ background: '#10B981', color: 'white', padding: '0.6rem 1rem', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>Download PDF Report</button>
+              <button style={{ background: '#10B981', color: 'white', padding: '0.6rem 1rem', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>Download PDF</button>
             </div>
             <div style={{ background: 'white', padding: '1.5rem', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
               {assignments.map(a => (

@@ -10,6 +10,7 @@ export default function StudentDashboard() {
   const [studentData, setStudentData] = useState(null);
   const [nextClass, setNextClass] = useState(null);
   const [isLocked, setIsLocked] = useState(false);
+  const [daysLeft, setDaysLeft] = useState(0);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -21,16 +22,19 @@ export default function StudentDashboard() {
       if (student) {
         setStudentData(student);
         
-        // Check the 7-day rule manually
-        const regDate = new Date(student.created_at);
-        const today = new Date();
-        const diffTime = Math.abs(today - regDate);
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        // 🛑 THE PERFECT LOCK LOGIC
+        const now = new Date();
+        const expiryDate = student.payment_expires_at ? new Date(student.payment_expires_at) : null;
         
-        // If they are APPROVED, they are never locked. If they are not approved and past 7 days, lock them.
-        if (student.payment_status === 'APPROVED' || diffDays <= 7) {
+        // If they have an expiry date AND it's in the future, they are unlocked.
+        if (expiryDate && expiryDate > now) {
           setIsLocked(false);
+          // Calculate days left
+          const diffTime = Math.abs(expiryDate - now);
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+          setDaysLeft(diffDays);
         } else {
+          // If the date is past, or they don't have one, they are locked.
           setIsLocked(true);
         }
 
@@ -76,13 +80,19 @@ export default function StudentDashboard() {
           </div>
         )}
 
-        {/* PAYWALL - ONLY SHOW IF LOCKED */}
+        {/* PAYWALL */}
         {isLocked ? (
           <div style={{ background: '#FEF3C7', border: '2px solid #F59E0B', padding: '2rem', borderRadius: '16px', textAlign: 'center', marginBottom: '2rem' }}>
-            <h2 style={{ color: '#D97706', fontSize: '1.4rem', fontWeight: 'bold', marginBottom: '1rem' }}>Your Free Week Has Ended 🔒</h2>
+            <h2 style={{ color: '#D97706', fontSize: '1.4rem', fontWeight: 'bold', marginBottom: '1rem' }}>Your Payment is Overdue 🔒</h2>
             <p style={{ color: '#B45309', marginBottom: '1.5rem' }}>Ask your parent to make a payment to unlock Weeks 2-8, Chat, and Calls.</p>
           </div>
         ) : (
+          <div style={{ background: '#F0FDF4', border: '1px solid #10B981', padding: '1rem', borderRadius: '12px', marginBottom: '2rem', textAlign: 'center', color: '#065F46', fontWeight: 'bold' }}>
+            ✅ Account Unlocked! You have {daysLeft} days of access remaining.
+          </div>
+        )}
+
+        {!isLocked && (
           <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '2rem' }}>
             <Link href="/student/call" style={{ flex: 1, minWidth: '200px', background: '#0F172A', padding: '1.5rem', borderRadius: '16px', color: 'white', textDecoration: 'none', textAlign: 'center' }}>
               <h2 style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>🎥 1-on-1 Call Room</h2>
