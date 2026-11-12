@@ -96,7 +96,7 @@ export default function ParentDashboard() {
           <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
             <button onClick={() => handleTabChange('overview')} style={{ textAlign: 'left', padding: '0.8rem 1rem', borderRadius: '10px', background: activeTab === 'overview' ? '#F3F4F6' : 'transparent', color: activeTab === 'overview' ? '#1E3A8A' : '#6B7280', border: 'none', cursor: 'pointer', fontWeight: '600' }}>Overview</button>
             <button onClick={() => handleTabChange('results')} style={{ textAlign: 'left', padding: '0.8rem 1rem', borderRadius: '10px', background: activeTab === 'results' ? '#F3F4F6' : 'transparent', color: activeTab === 'results' ? '#1E3A8A' : '#6B7280', border: 'none', cursor: 'pointer', fontWeight: '600' }}>Graded Results</button>
-            <button onClick={() => handleTabChange('chat')} style={{ textAlign: 'left', padding: '0.8rem 1rem', borderRadius: '10px', background: activeTab === 'chat' ? '#F3F4F6' : 'transparent', color: activeTab === 'chat' ? '#1E3A8A' : '#6B7280', border: 'none', cursor: 'pointer', fontWeight: '600' }}>Messages</button>
+            <button onClick={() => handleTabChange('chat')} style={{ textAlign: 'left', padding: '0.8rem 1rem', borderRadius: '10px', background: activeTab === 'chat' ? '#F3F4F6' : 'transparent', color: activeTab === 'chat' ? '#1E3A8A' : '#6B7280', border: 'none', cursor: 'pointer', fontWeight: '600' }}>Chat Tutor</button>
           </nav>
 
           <button onClick={async () => { await supabase.auth.signOut(); router.push('/login'); }} style={{ background: '#FEF2F2', color: '#EF4444', padding: '0.8rem', borderRadius: '10px', fontWeight: '600', border: 'none', cursor: 'pointer', marginTop: 'auto' }}>Log Out</button>
@@ -158,7 +158,7 @@ export default function ParentDashboard() {
 
             {activeTab === 'chat' && (
               <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 150px)' }}>
-                <h2 style={{ fontSize: '1.8rem', fontWeight: '800', color: '#111827', marginBottom: '1.5rem' }}>Messages with Tutor</h2>
+                <h2 style={{ fontSize: '1.8rem', fontWeight: '800', color: '#111827', marginBottom: '1.5rem' }}>Chat with Tutor</h2>
                 <div style={{ flex: 1, background: 'white', borderRadius: '20px', border: '1px solid #E5E7EB', padding: '1.5rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                   {messages.map(m => (
                     <div key={m.id} style={{ alignSelf: m.sender_role === 'parent' ? 'flex-end' : 'flex-start', maxWidth: '75%' }}>
