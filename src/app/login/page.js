@@ -19,28 +19,38 @@ export default function Login() {
     setError(null);
 
     try {
-      // 1. Authenticate with Supabase (This takes ~0.5s)
+      // 1. Authenticate with Supabase
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password });
       if (authError) throw new Error(authError.message);
 
-      const userEmail = authData.user.email;
+      const userId = authData.user.id;
 
-      // 2. INSTANT REDIRECT (Based on email patterns)
-      // We don't wait for the database to tell us who they are.
-      if (userEmail.includes('novaearlyelimu.com')) {
-        router.push('/admin'); // Admin
-      } else if (userEmail.includes('@gmail.com')) {
-        // Since kids register with gmail, but parents might too, we need to check.
-        // We will do a fast background check here just for parent vs student.
-        const { data: parentData } = await supabase.from('parents').select('id').eq('id', authData.user.id).single();
-        if (parentData) {
-          router.push('/parent');
-        } else {
-          router.push('/student');
-        }
-      } else {
-        router.push('/parent'); // Default fallback
+      // 2. Check TUTORS first (Strict routing)
+      const { data: tutorData } = await supabase.from('tutors').select('id').eq('id', userId).single();
+      if (tutorData) {
+        router.push('/tutor');
+        return;
       }
+
+      // 3. Check ADMIN (Parents table with admin role)
+      const { data: parentData } = await supabase.from('parents').select('role').eq('id', userId).single();
+      if (parentData) {
+        if (parentData.role === 'admin') {
+          router.push('/admin');
+        } else {
+          router.push('/parent');
+        }
+        return;
+      }
+
+      // 4. Check STUDENT
+      const { data: studentData } = await supabase.from('students').select('id').eq('auth_user_id', userId).single();
+      if (studentData) {
+        router.push('/student');
+        return;
+      }
+
+      throw new Error('Account not found. Please contact support.');
       
     } catch (err) {
       setError(err.message);

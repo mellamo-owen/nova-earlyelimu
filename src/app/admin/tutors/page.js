@@ -41,7 +41,9 @@ export default function AdminTutors() {
     if (profileError) {
       alert('Error saving tutor profile: ' + profileError.message);
     } else {
-      // Show the credentials and email template
+      // 3. IMPORTANT: Make sure they are NOT in the parents table
+      await supabase.from('parents').delete().eq('id', authData.user.id);
+
       setCreatedTutor({ name, email, password });
       setName(''); setEmail(''); setPhone(''); setPassword('');
       fetchTutors();
@@ -49,14 +51,14 @@ export default function AdminTutors() {
     setSaving(false);
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <div style={{ color: '#94A3B8' }}>Loading...</div>;
 
   return (
     <div style={{ maxWidth: '1000px', margin: '0 auto', display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
       
       {/* CREATE TUTOR FORM */}
       <div style={{ flex: 1, minWidth: '300px', background: '#1F2937', padding: '2rem', borderRadius: '12px', border: '1px solid #374151' }}>
-        <h2 style={{ fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '1.5rem' }}>Add New Tutor</h2>
+        <h2 style={{ fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '1.5rem', color: '#10B981' }}>Add New Tutor</h2>
         <form onSubmit={handleCreateTutor} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <input type="text" placeholder="Tutor Name" required value={name} onChange={e => setName(e.target.value)} style={{ padding: '0.8rem', borderRadius: '8px', border: '1px solid #374151', background: '#111827', color: 'white' }} />
           <input type="email" placeholder="Tutor Email (used for login)" required value={email} onChange={e => setEmail(e.target.value)} style={{ padding: '0.8rem', borderRadius: '8px', border: '1px solid #374151', background: '#111827', color: 'white' }} />
@@ -71,7 +73,6 @@ export default function AdminTutors() {
       {/* RIGHT SIDE: TUTORS LIST OR EMAIL TEMPLATE */}
       <div style={{ flex: 2, minWidth: '300px' }}>
         
-        {/* EMAIL TEMPLATE DISPLAY (Shows after creation) */}
         {createdTutor && (
           <div style={{ background: '#065F46', padding: '1.5rem', borderRadius: '12px', border: '1px solid #10B981', marginBottom: '2rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
@@ -105,7 +106,6 @@ Nova earlyElimu`}
           </div>
         )}
 
-        {/* TUTORS LIST */}
         <h2 style={{ fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '1.5rem' }}>Your Tutors</h2>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {tutors.map(tutor => (
