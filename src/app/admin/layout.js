@@ -24,12 +24,13 @@ export default function AdminLayout({ children }) {
     router.push('/login');
   };
 
+  // ADMIN ONLY SEES THIS
   const navItems = [
-    { name: 'Dashboard', path: '/admin' },
-    { name: 'Students', path: '/admin/students' },
-    { name: 'Tutors', path: '/admin/tutors' }, // <--- ADDED TUTORS HERE
+    { name: 'Revenue Analytics', path: '/admin' },
+    { name: 'Manage Payments', path: '/admin/payments' },
+    { name: 'Manage Tutors', path: '/admin/tutors' },
+    { name: 'Assign Students', path: '/admin/students' },
     { name: 'ID Cards', path: '/admin/id-cards' },
-    { name: 'Payments', path: '/admin/payments' },
     { name: 'Announcements', path: '/admin/announcements' },
   ];
 
@@ -50,7 +51,7 @@ export default function AdminLayout({ children }) {
           
           <div className="desktop-logo" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '2.5rem' }}>
             <div style={{ width: '35px', height: '35px', background: '#10B981', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', color: '#000' }}>N</div>
-            <span style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>Nova Admin</span>
+            <span style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>Admin Portal</span>
           </div>
 
           <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
@@ -65,8 +66,7 @@ export default function AdminLayout({ children }) {
           </nav>
 
           <div style={{ borderTop: '1px solid #374151', paddingTop: '1rem', marginTop: 'auto' }}>
-            <p style={{ fontSize: '0.8rem', color: '#9CA3AF', marginBottom: '0.5rem' }}>Logged in as</p>
-            <p style={{ fontSize: '0.9rem', fontWeight: 'bold', marginBottom: '1rem', wordBreak: 'break-all' }}>{user?.email || 'Admin'}</p>
+            <p style={{ fontSize: '0.9rem', fontWeight: 'bold', marginBottom: '1rem', wordBreak: 'break-all' }}>{user?.email}</p>
             <button onClick={handleLogout} style={{ width: '100%', background: '#EF4444', color: 'white', padding: '0.6rem', borderRadius: '6px', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>Logout</button>
           </div>
 

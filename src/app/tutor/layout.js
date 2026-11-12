@@ -31,7 +31,7 @@ export default function TutorLayout({ children }) {
     const { error } = await supabase.auth.updateUser({ password: newPassword });
     if (error) setPasswordMessage('Error: ' + error.message);
     else {
-      setPasswordMessage('Password updated successfully!');
+      setPasswordMessage('Password updated!');
       setNewPassword('');
       setTimeout(() => { setShowPasswordForm(false); setPasswordMessage(''); }, 2000);
     }
@@ -42,31 +42,29 @@ export default function TutorLayout({ children }) {
     router.push('/login');
   };
 
+  // TUTOR SEES ALL OF THIS
   const navItems = [
     { name: 'Dashboard', path: '/tutor' },
-    { name: 'Lessons', path: '/tutor/lessons' },
-    { name: 'Grading', path: '/tutor/grading' },
-    { name: 'Calls', path: '/tutor/calls' },
-    { name: 'Projects', path: '/tutor/projects' },
+    { name: 'Class Group Chat', path: '/tutor/group' }, // NEW
+    { name: 'Lessons & Videos', path: '/tutor/lessons' },
+    { name: 'Assignments & Grading', path: '/tutor/grading' },
+    { name: '1-on-1 Calls', path: '/tutor/calls' },
+    { name: 'Group Projects', path: '/tutor/projects' },
   ];
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#0F172A', color: '#F8FAFC', fontFamily: 'sans-serif', flexDirection: 'column' }}>
       
-      {/* MOBILE HEADER */}
       <div style={{ display: 'none', background: '#1E293B', padding: '1rem', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #334155' }} className="mobile-header-tutor">
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <div style={{ width: '30px', height: '30px', background: '#3B82F6', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>S</div>
           <span style={{ fontWeight: 'bold', fontSize: '1rem' }}>Smart Tutor</span>
         </div>
-        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} style={{ background: 'transparent', border: 'none', color: 'white', fontSize: '1.5rem', cursor: 'pointer' }}>
-          ☰
-        </button>
+        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} style={{ background: 'transparent', border: 'none', color: 'white', fontSize: '1.5rem', cursor: 'pointer' }}>☰</button>
       </div>
 
       <div style={{ display: 'flex', flex: 1, flexDirection: 'row' }}>
         
-        {/* SIDEBAR */}
         <aside className={`sidebar-tutor ${isMobileMenuOpen ? 'open' : ''}`} style={{ width: '260px', background: '#1E293B', padding: '1.5rem', display: 'flex', flexDirection: 'column', borderRight: '1px solid #334155', flexShrink: 0 }}>
           
           <div className="desktop-logo-tutor" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '3rem' }}>
@@ -82,8 +80,7 @@ export default function TutorLayout({ children }) {
                   display: 'flex', alignItems: 'center', padding: '0.75rem 1rem', 
                   background: isActive ? '#334155' : 'transparent', 
                   borderRadius: '8px', color: isActive ? 'white' : '#94A3B8', 
-                  textDecoration: 'none', fontWeight: isActive ? 'bold' : 'normal',
-                  transition: 'all 0.2s'
+                  textDecoration: 'none', fontWeight: isActive ? 'bold' : 'normal', transition: 'all 0.2s'
                 }}>
                   {item.name}
                 </Link>
@@ -92,18 +89,12 @@ export default function TutorLayout({ children }) {
           </nav>
 
           <div style={{ borderTop: '1px solid #334155', paddingTop: '1rem', marginTop: 'auto' }}>
-            <button onClick={() => setShowPasswordForm(!showPasswordForm)} style={{ width: '100%', background: 'transparent', border: '1px solid #334155', color: '#3B82F6', padding: '0.75rem', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', marginBottom: '0.5rem' }}>
-              Change Password
-            </button>
-            <button onClick={handleLogout} style={{ width: '100%', background: 'transparent', border: 'none', color: '#EF4444', padding: '0.75rem', fontWeight: 'bold', cursor: 'pointer', textAlign: 'center' }}>
-              Log Out
-            </button>
+            <button onClick={() => setShowPasswordForm(!showPasswordForm)} style={{ width: '100%', background: 'transparent', border: '1px solid #334155', color: '#3B82F6', padding: '0.75rem', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', marginBottom: '0.5rem' }}>Change Password</button>
+            <button onClick={handleLogout} style={{ width: '100%', background: 'transparent', border: 'none', color: '#EF4444', padding: '0.75rem', fontWeight: 'bold', cursor: 'pointer', textAlign: 'center' }}>Log Out</button>
           </div>
         </aside>
 
-        {/* MAIN CONTENT */}
         <main style={{ flex: 1, padding: '2rem', overflowY: 'auto', width: '100%' }}>
-          
           {showPasswordForm && (
             <div style={{ background: '#1E293B', padding: '1.5rem', borderRadius: '16px', border: '1px solid #334155', marginBottom: '2rem' }}>
               <h2 style={{ fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '1rem', color: '#3B82F6' }}>Update Your Password</h2>
@@ -114,26 +105,14 @@ export default function TutorLayout({ children }) {
               </form>
             </div>
           )}
-
           {children}
         </main>
-
       </div>
 
-      {/* MOBILE RESPONSIVE CSS */}
       <style jsx global>{`
         @media (max-width: 768px) {
           .mobile-header-tutor { display: flex !important; }
-          .sidebar-tutor { 
-            display: none !important; 
-            position: absolute; 
-            top: 60px; 
-            left: 0; 
-            right: 0; 
-            width: 100%; 
-            z-index: 50;
-            height: calc(100vh - 60px);
-          }
+          .sidebar-tutor { display: none !important; position: absolute; top: 60px; left: 0; right: 0; width: 100%; z-index: 50; height: calc(100vh - 60px); }
           .sidebar-tutor.open { display: flex !important; }
           .desktop-logo-tutor { display: none !important; }
           main { padding: 1rem !important; }
