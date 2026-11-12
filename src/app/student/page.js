@@ -8,7 +8,7 @@ export default function StudentDashboard() {
   const router = useRouter();
   const [student, setStudent] = useState(null);
   const [lessons, setLessons] = useState([]);
-  const [nextClass, setNextClass] = useState(null);
+  const [latestLesson, setLatestLesson] = useState(null);
   const [isLocked, setIsLocked] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -17,27 +17,23 @@ export default function StudentDashboard() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { router.push('/login'); return; }
 
-      // Get student profile
       const { data: studentData } = await supabase.from('students').select('*').eq('auth_user_id', user.id).single();
       
       if (studentData) {
         setStudent(studentData);
         
+        // Lock Logic
         const now = new Date();
         const expiryDate = studentData.payment_expires_at ? new Date(studentData.payment_expires_at) : null;
         if (!expiryDate || expiryDate < now) setIsLocked(true);
 
-        // 🛑 CRITICAL FIX: Fetch ALL lessons without ANY filters
-        const { data: lessonData, error } = await supabase.from('lessons').select('*');
-
-        console.log("LESSONS FETCHED FROM DATABASE:", lessonData);
-        console.log("ERROR (if any):", error);
-
+        // Fetch ALL lessons
+        const { data: lessonData } = await supabase.from('lessons').select('*').order('week', { ascending: false });
+        
         if (lessonData && lessonData.length > 0) {
-          // Sort them by week number in JavaScript, not SQL
-          const sortedLessons = lessonData.sort((a, b) => a.week - b.week);
-          setLessons(sortedLessons);
-          setNextClass(sortedLessons[0]); // Just grab the first week for the card
+          setLessons(lessonData);
+          // Grab the HIGHEST week number as the latest lesson
+          setLatestLesson(lessonData[0]);
         }
       }
       setLoading(false);
@@ -56,7 +52,7 @@ export default function StudentDashboard() {
     <div>
       <div style={{ marginBottom: '2rem' }}>
         <h1 style={{ fontSize: '1.8rem', fontWeight: '800', color: 'white', letterSpacing: '-0.5px' }}>
-          Welcome back, {student?.name.split(' ')[0]}! 👋
+          Welcome back, {student?.name.split(' ')[0]}!
         </h1>
         <p style={{ color: '#9CA3AF', marginTop: '0.2rem' }}>Here is your learning overview for today.</p>
       </div>
@@ -77,22 +73,22 @@ export default function StudentDashboard() {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
         
-        {/* NEXT CLASS CARD */}
+        {/* LATEST CLASS CARD */}
         <div style={{ background: 'linear-gradient(135deg, #1E3A8A 0%, #111827 100%)', padding: '2rem', borderRadius: '20px', color: 'white', position: 'relative', overflow: 'hidden', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5)' }}>
           <div style={{ position: 'absolute', top: '-50px', right: '-50px', width: '150px', height: '150px', background: 'rgba(16, 185, 129, 0.2)', borderRadius: '50%', filter: 'blur(40px)' }}></div>
           <div style={{ position: 'relative', zIndex: 1 }}>
-            <p style={{ color: '#93C5FD', fontSize: '0.85rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '1rem' }}>Next Class</p>
-            {nextClass ? (
+            <p style={{ color: '#93C5FD', fontSize: '0.85rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '1rem' }}>Latest Posted Class</p>
+            {latestLesson ? (
               <>
-                <h2 style={{ fontSize: '1.5rem', fontWeight: '800', marginBottom: '0.5rem' }}>Week {nextClass.week}: {nextClass.title}</h2>
-                <p style={{ color: '#10B981', fontSize: '0.95rem', marginBottom: '1rem', fontWeight: '500' }}>🗓️ {formatDate(nextClass.class_date)}</p>
-                {nextClass.assignment_task && (
+                <h2 style={{ fontSize: '1.5rem', fontWeight: '800', marginBottom: '0.5rem' }}>Week {latestLesson.week}: {latestLesson.title}</h2>
+                <p style={{ color: '#10B981', fontSize: '0.95rem', marginBottom: '1rem', fontWeight: '500' }}>{formatDate(latestLesson.class_date)}</p>
+                {latestLesson.assignment_task && (
                   <p style={{ color: '#D1D5DB', fontSize: '0.9rem', marginBottom: '1.5rem', background: 'rgba(255,255,255,0.1)', padding: '0.5rem', borderRadius: '6px' }}>
-                    <strong>Task:</strong> {nextClass.assignment_task}
+                    <strong>Assignment:</strong> {latestLesson.assignment_task}
                   </p>
                 )}
                 {!isLocked ? (
-                  <a href={nextClass.meet_link || '#'} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', background: '#10B981', color: 'white', padding: '0.8rem 2rem', borderRadius: '10px', fontWeight: '700', textDecoration: 'none', fontSize: '0.95rem', boxShadow: '0 4px 14px 0 rgba(16, 185, 129, 0.39)' }}>Join Class</a>
+                  <a href={latestLesson.meet_link || '#'} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', background: '#10B981', color: 'white', padding: '0.8rem 2rem', borderRadius: '10px', fontWeight: '700', textDecoration: 'none', fontSize: '0.95rem', boxShadow: '0 4px 14px 0 rgba(16, 185, 129, 0.39)' }}>Join Class</a>
                 ) : (
                   <span style={{ display: 'inline-block', background: 'rgba(255, 255, 255, 0.1)', color: '#9CA3AF', padding: '0.8rem 2rem', borderRadius: '10px', fontWeight: '700', fontSize: '0.95rem' }}>Payment Required</span>
                 )}
@@ -126,16 +122,34 @@ export default function StudentDashboard() {
           <h2 style={{ fontSize: '1.1rem', fontWeight: '800', color: 'white', marginBottom: '1rem' }}>Quick Actions</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             <Link href="/student/group" style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: '#111827', padding: '1rem', borderRadius: '12px', color: 'white', textDecoration: 'none', fontWeight: '600', border: '1px solid #374151', transition: 'all 0.2s' }}>
-              <div style={{ background: '#1E3A8A', padding: '0.5rem', borderRadius: '8px', color: 'white' }}>💬</div> Class Chat
+              <div style={{ background: '#1E3A8A', padding: '0.5rem', borderRadius: '8px', color: 'white' }}>C</div> Class Chat
             </Link>
             <Link href="/student/call" style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: '#111827', padding: '1rem', borderRadius: '12px', color: 'white', textDecoration: 'none', fontWeight: '600', border: '1px solid #374151', transition: 'all 0.2s' }}>
-              <div style={{ background: '#065F46', padding: '0.5rem', borderRadius: '8px', color: '#10B981' }}>🎥</div> 1-on-1 Call
+              <div style={{ background: '#065F46', padding: '0.5rem', borderRadius: '8px', color: '#10B981' }}>V</div> 1-on-1 Call
             </Link>
           </div>
         </div>
 
       </div>
+
+      {/* ALL ASSIGNMENTS LIST */}
+      <div style={{ marginTop: '2rem' }}>
+        <h2 style={{ fontSize: '1.3rem', fontWeight: '800', color: 'white', marginBottom: '1rem' }}>All Posted Assignments</h2>
+        <div style={{ background: '#1F2937', borderRadius: '20px', border: '1px solid #374151', overflow: 'hidden' }}>
+          {lessons.filter(l => l.assignment_task).map(lesson => (
+            <div key={lesson.id} style={{ padding: '1.5rem', borderBottom: '1px solid #374151', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <p style={{ fontWeight: '700', color: 'white', fontSize: '1rem' }}>Week {lesson.week}: {lesson.title}</p>
+                <p style={{ color: '#9CA3AF', fontSize: '0.9rem', marginTop: '0.3rem' }}>Task: {lesson.assignment_task}</p>
+              </div>
+              <Link href="/student/assignments" style={{ background: '#1E3A8A', color: 'white', padding: '0.5rem 1rem', borderRadius: '8px', textDecoration: 'none', fontWeight: '600', fontSize: '0.85rem' }}>Submit</Link>
+            </div>
+          ))}
+          {lessons.filter(l => l.assignment_task).length === 0 && (
+             <p style={{ padding: '2rem', textAlign: 'center', color: '#9CA3AF' }}>No assignments posted yet.</p>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
-
