@@ -8,6 +8,7 @@ export default function StudentLayout({ children }) {
   const router = useRouter();
   const pathname = usePathname();
   const [student, setStudent] = useState(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const getStudent = async () => {
@@ -32,41 +33,73 @@ export default function StudentLayout({ children }) {
   ];
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#F3F4F6', fontFamily: 'sans-serif' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', background: '#F3F4F6', fontFamily: 'sans-serif', flexDirection: 'column' }}>
       
-      {/* SIDEBAR */}
-      <aside style={{ width: '250px', background: '#1E293B', color: 'white', padding: '1.5rem', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '2.5rem' }}>
-          <div style={{ width: '35px', height: '35px', background: '#EF4444', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>N</div>
-          <span style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>Nova Student</span>
+      {/* MOBILE HEADER (Hamburger) */}
+      <div className="mobile-header-student" style={{ display: 'none', background: '#1E293B', padding: '1rem', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #334155' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{ width: '30px', height: '30px', background: '#EF4444', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', color: 'white' }}>N</div>
+          <span style={{ fontWeight: 'bold', fontSize: '1rem', color: 'white' }}>Nova Student</span>
         </div>
+        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} style={{ background: 'transparent', border: 'none', color: 'white', fontSize: '1.5rem', cursor: 'pointer' }}>☰</button>
+      </div>
 
-        <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
-          {navItems.map((item) => {
-            const isActive = pathname === item.path;
-            return (
-              <Link key={item.name} href={item.path} style={{ 
-                display: 'flex', alignItems: 'center', padding: '0.75rem 1rem', 
-                background: isActive ? '#EF4444' : 'transparent', 
-                borderRadius: '8px', color: isActive ? 'white' : '#94A3B8', 
-                textDecoration: 'none', fontWeight: isActive ? 'bold' : 'normal', transition: 'all 0.2s'
-              }}>
-                {item.name}
-              </Link>
-            );
-          })}
-        </nav>
+      <div style={{ display: 'flex', flex: 1, flexDirection: 'row' }}>
+        
+        {/* SIDEBAR */}
+        <aside className={`sidebar-student ${isMobileMenuOpen ? 'open' : ''}`} style={{ width: '250px', background: '#1E293B', color: 'white', padding: '1.5rem', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
+          <div className="desktop-logo-student" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '2.5rem' }}>
+            <div style={{ width: '35px', height: '35px', background: '#EF4444', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>N</div>
+            <span style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>Nova Student</span>
+          </div>
 
-        <div style={{ borderTop: '1px solid #334155', paddingTop: '1rem' }}>
-          <p style={{ fontSize: '0.9rem', fontWeight: 'bold', marginBottom: '1rem' }}>{student?.name || 'Student'}</p>
-          <button onClick={handleLogout} style={{ width: '100%', background: 'transparent', border: '1px solid #EF4444', color: '#EF4444', padding: '0.75rem', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>Log Out</button>
-        </div>
-      </aside>
+          <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
+            {navItems.map((item) => {
+              const isActive = pathname === item.path;
+              return (
+                <Link key={item.name} href={item.path} onClick={() => setIsMobileMenuOpen(false)} style={{ 
+                  display: 'flex', alignItems: 'center', padding: '0.75rem 1rem', 
+                  background: isActive ? '#EF4444' : 'transparent', 
+                  borderRadius: '8px', color: isActive ? 'white' : '#94A3B8', 
+                  textDecoration: 'none', fontWeight: isActive ? 'bold' : 'normal', transition: 'all 0.2s'
+                }}>
+                  {item.name}
+                </Link>
+              );
+            })}
+          </nav>
 
-      {/* MAIN CONTENT */}
-      <main style={{ flex: 1, padding: '2rem', overflowY: 'auto' }}>
-        {children}
-      </main>
+          <div style={{ borderTop: '1px solid #334155', paddingTop: '1rem' }}>
+            <p style={{ fontSize: '0.9rem', fontWeight: 'bold', marginBottom: '1rem' }}>{student?.name || 'Student'}</p>
+            <button onClick={handleLogout} style={{ width: '100%', background: 'transparent', border: '1px solid #EF4444', color: '#EF4444', padding: '0.75rem', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>Log Out</button>
+          </div>
+        </aside>
+
+        {/* MAIN CONTENT */}
+        <main style={{ flex: 1, padding: '2rem', overflowY: 'auto', width: '100%' }}>
+          {children}
+        </main>
+      </div>
+
+      {/* MOBILE RESPONSIVE CSS */}
+      <style jsx global>{`
+        @media (max-width: 768px) {
+          .mobile-header-student { display: flex !important; }
+          .sidebar-student { 
+            display: none !important; 
+            position: absolute; 
+            top: 60px; 
+            left: 0; 
+            right: 0; 
+            width: 100%; 
+            z-index: 50;
+            height: calc(100vh - 60px);
+          }
+          .sidebar-student.open { display: flex !important; }
+          .desktop-logo-student { display: none !important; }
+          main { padding: 1rem !important; }
+        }
+      `}</style>
     </div>
   );
 }
