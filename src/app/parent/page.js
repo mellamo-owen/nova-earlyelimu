@@ -2,108 +2,166 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useRouter } from 'next/navigation';
 
-export default function ParentChat() {
+export default function ParentDashboard() {
+  const router = useRouter();
+  const [activeTab, setActiveTab] = useState('overview');
+  const [loading, setLoading] = useState(true);
+  const [parentData, setParentData] = useState(null);
+  const [studentData, setStudentData] = useState(null);
+  const [assignments, setAssignments] = useState([]);
   const [messages, setMessages] = useState([]);
-  const [text, setText] = useState('');
-  const [parentId, setParentId] = useState(null);
-  const [tutorId, setTutorId] = useState(null);
-  const [tutorName, setTutorName] = useState('Teacher');
+  const [newMessage, setNewMessage] = useState('');
+  const [isLocked, setIsLocked] = useState(false);
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
-    const initChat = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      setParentId(user.id);
-
-      // Find the child's assigned tutor
-      const { data: student } = await supabase.from('students').select('tutor_id').eq('parent_id', user.id).single();
-      
-      if (student && student.tutor_id) {
-        setTutorId(student.tutor_id);
-        
-        // Get the tutor's name
-        const { data: tutorData } = await supabase.from('tutors').select('name').eq('id', student.tutor_id).single();
-        if (tutorData) setTutorName(tutorData.name);
-
-        // Fetch only private messages between this parent and this tutor
-        const { data: msgs } = await supabase
-          .from('messages')
-          .select('*')
-          .or(`and(parent_id.eq.${user.id},tutor_id.eq.${student.tutor_id}),and(sender_role.eq.tutor,parent_id.eq.${user.id})`)
-          .order('created_at', { ascending: true });
-          
-        if (msgs) setMessages(msgs);
-
-        // Listen for new messages
-        const subscription = supabase.channel('private-parent-chat')
-          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
-            if (payload.new.parent_id === user.id && payload.new.tutor_id === student.tutor_id) {
-              setMessages(prev => [...prev, payload.new]);
-            }
-          }).subscribe();
-
-        return () => supabase.removeChannel(subscription);
-      }
-    };
-    initChat();
+    fetchData();
   }, []);
+
+  const fetchData = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { router.push('/login'); return; }
+
+    const { data: parent } = await supabase.from('parents').select('*').eq('id', user.id).single();
+    if (parent) setParentData(parent);
+
+    const { data: student } = await supabase.from('students').select('*').eq('parent_id', user.id).single();
+    if (student) {
+      setStudentData(student);
+      const now = new Date();
+      const expiryDate = student.payment_expires_at ? new Date(student.payment_expires_at) : null;
+      if (!expiryDate || expiryDate < now) setIsLocked(true);
+
+      const { data: assignmentData } = await supabase.from('assignments').select('*, lessons(title, week)').eq('student_id', student.id).order('created_at', { ascending: false });
+      if (assignmentData) setAssignments(assignmentData);
+
+      const { data: chatData } = await supabase.from('messages').select('*').eq('parent_id', user.id).order('created_at', { ascending: true });
+      if (chatData) setMessages(chatData);
+    }
+    setLoading(false);
+  };
+
+  const handleSendMessage = async (e) => {
+    e.preventDefault();
+    if (!newMessage.trim() || !studentData?.tutor_id) return;
+    
+    const newMsg = {
+      sender_name: parentData?.name,
+      sender_role: 'parent',
+      text_content: newMessage,
+      parent_id: parentData?.id,
+      tutor_id: studentData?.tutor_id
+    };
+    setMessages(prev => [...prev, newMsg]);
+    setNewMessage('');
+    await supabase.from('messages').insert([newMsg]);
+  };
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const sendMessage = async (e) => {
-    e.preventDefault();
-    if (!text.trim() || !tutorId) return;
-
-    const newMsg = {
-      sender_name: 'Parent',
-      sender_role: 'parent',
-      text_content: text,
-      parent_id: parentId,
-      tutor_id: tutorId
-    };
-
-    setMessages(prev => [...prev, newMsg]);
-    setText('');
-    
-    await supabase.from('messages').insert([newMsg]);
-  };
+  if (loading) return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading...</div>;
 
   return (
-    <div style={{ maxWidth: '800px', margin: '0 auto', height: 'calc(100vh - 100px)', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ background: '#1E293B', padding: '1rem', borderRadius: '12px 12px 0 0', borderBottom: '1px solid #334155' }}>
-        <h1 style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'white' }}>Chat with {tutorName}</h1>
-        <p style={{ fontSize: '0.8rem', color: '#94A3B8' }}>This is a private chat. Only you and the teacher can see this.</p>
-      </div>
+    <div style={{ display: 'flex', minHeight: '100vh', background: '#F8FAFC', fontFamily: 'Inter, sans-serif' }}>
+      
+      {/* SIDEBAR */}
+      <aside style={{ width: '260px', background: 'white', padding: '1.5rem', borderRight: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '3rem' }}>
+          <div style={{ width: '40px', height: '40px', background: 'linear-gradient(135deg, #1E3A8A, #000)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', color: 'white', fontSize: '1.2rem' }}>N</div>
+          <span style={{ fontWeight: '800', fontSize: '1.2rem', letterSpacing: '-0.5px', color: '#0F172A' }}>Nova Parent</span>
+        </div>
 
-      <div style={{ flex: 1, background: '#F9FAFB', padding: '1rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        {messages.map(msg => (
-          <div key={msg.id} style={{ alignSelf: msg.sender_role === 'parent' ? 'flex-end' : 'flex-start', maxWidth: '80%' }}>
-            <p style={{ fontSize: '0.75rem', color: '#6B7280', marginBottom: '0.2rem', textAlign: msg.sender_role === 'parent' ? 'right' : 'left' }}>
-              {msg.sender_name}
-            </p>
-            <div style={{ background: msg.sender_role === 'parent' ? '#1E3A8A' : '#E5E7EB', padding: '0.8rem', borderRadius: '12px', color: msg.sender_role === 'parent' ? 'white' : 'black' }}>
-              <p style={{ fontSize: '0.95rem' }}>{msg.text_content}</p>
+        <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
+          <button onClick={() => setActiveTab('overview')} style={{ textAlign: 'left', padding: '0.8rem 1rem', borderRadius: '10px', background: activeTab === 'overview' ? '#F1F5F9' : 'transparent', color: activeTab === 'overview' ? '#0F172A' : '#64748B', border: 'none', cursor: 'pointer', fontWeight: '600' }}>Overview</button>
+          <button onClick={() => setActiveTab('results')} style={{ textAlign: 'left', padding: '0.8rem 1rem', borderRadius: '10px', background: activeTab === 'results' ? '#F1F5F9' : 'transparent', color: activeTab === 'results' ? '#0F172A' : '#64748B', border: 'none', cursor: 'pointer', fontWeight: '600' }}>Graded Results</button>
+          <button onClick={() => setActiveTab('chat')} style={{ textAlign: 'left', padding: '0.8rem 1rem', borderRadius: '10px', background: activeTab === 'chat' ? '#F1F5F9' : 'transparent', color: activeTab === 'chat' ? '#0F172A' : '#64748B', border: 'none', cursor: 'pointer', fontWeight: '600' }}>Messages</button>
+        </nav>
+
+        <button onClick={async () => { await supabase.auth.signOut(); router.push('/login'); }} style={{ background: '#FEF2F2', color: '#EF4444', padding: '0.8rem', borderRadius: '10px', fontWeight: '600', border: 'none', cursor: 'pointer' }}>Log Out</button>
+      </aside>
+
+      {/* MAIN CONTENT */}
+      <main style={{ flex: 1, padding: '2rem', overflowY: 'auto' }}>
+        <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+          
+          {activeTab === 'overview' && (
+            <div>
+              <h2 style={{ fontSize: '1.8rem', fontWeight: '800', color: '#0F172A', marginBottom: '1.5rem' }}>Welcome, {parentData?.name}</h2>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
+                
+                {/* STATUS CARD */}
+                <div style={{ background: 'white', padding: '2rem', borderRadius: '20px', border: '1px solid #E2E8F0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#0F172A', marginBottom: '1rem' }}>Student Profile</h3>
+                  <p style={{ fontSize: '1.5rem', fontWeight: '800', color: '#1E293B', marginBottom: '0.5rem' }}>{studentData?.name}</p>
+                  <p style={{ color: '#64748B', fontWeight: '500' }}>ID: {studentData?.student_id_code}</p>
+                  
+                  <div style={{ marginTop: '1.5rem', padding: '1rem', borderRadius: '12px', background: isLocked ? '#FEF2F2' : '#ECFDF5', border: `1px solid ${isLocked ? '#FCA5A5' : '#A7F3D0'}` }}>
+                    <p style={{ color: isLocked ? '#B91C1C' : '#047857', fontWeight: '700', fontSize: '0.95rem' }}>
+                      {isLocked ? '🔒 Payment Required' : '✅ Account Active'}
+                    </p>
+                    <p style={{ color: isLocked ? '#7F1D1D' : '#065F46', fontSize: '0.85rem', marginTop: '0.2rem' }}>
+                      {isLocked ? 'Please pay to unlock the next week.' : 'Your child has full access to all classes.'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* PAYMENT CARD */}
+                <div style={{ background: 'linear-gradient(135deg, #1E3A8A, #0F172A)', padding: '2rem', borderRadius: '20px', color: 'white', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '1rem' }}>Payments</h3>
+                  <p style={{ color: '#93C5FD', fontSize: '0.9rem', marginBottom: '1.5rem' }}>Unlock the next week or the full 8 weeks.</p>
+                  <button onClick={() => router.push('/payment')} style={{ background: '#3B82F6', color: 'white', padding: '0.8rem 1.5rem', borderRadius: '10px', fontWeight: '700', border: 'none', cursor: 'pointer', width: '100%' }}>Make Payment</button>
+                </div>
+              </div>
             </div>
-          </div>
-        ))}
-        {messages.length === 0 && <p style={{ textAlign: 'center', color: '#6B7280', marginTop: '2rem' }}>No messages yet. Say hello to your teacher!</p>}
-        <div ref={messagesEndRef} />
-      </div>
+          )}
 
-      <div style={{ background: '#E5E7EB', padding: '1rem', borderRadius: '0 0 12px 12px', borderTop: '1px solid #D1D5DB' }}>
-        {!tutorId ? (
-          <p style={{ color: '#EF4444', textAlign: 'center', fontWeight: 'bold' }}>No tutor assigned to your child yet.</p>
-        ) : (
-          <form onSubmit={sendMessage} style={{ display: 'flex', gap: '0.5rem' }}>
-            <input type="text" value={text} onChange={e => setText(e.target.value)} placeholder="Type a message to the teacher..." style={{ flex: 1, padding: '0.8rem', borderRadius: '8px', border: '1px solid #D1D5DB', background: 'white', color: 'black' }} />
-            <button type="submit" style={{ background: '#1E3A8A', color: 'white', padding: '0 1.5rem', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>Send</button>
-          </form>
-        )}
-      </div>
+          {activeTab === 'results' && (
+            <div>
+              <h2 style={{ fontSize: '1.8rem', fontWeight: '800', color: '#0F172A', marginBottom: '1.5rem' }}>Graded Results</h2>
+              <div style={{ background: 'white', borderRadius: '20px', border: '1px solid #E2E8F0', overflow: 'hidden' }}>
+                {assignments.map(a => (
+                  <div key={a.id} style={{ padding: '1.5rem', borderBottom: '1px solid #F1F5F9' }}>
+                    <p style={{ fontWeight: '700', color: '#0F172A', fontSize: '1.1rem' }}>Week {a.lessons?.week}: {a.lessons?.title}</p>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.5rem' }}>
+                      <span style={{ background: '#ECFDF5', color: '#047857', padding: '0.2rem 0.6rem', borderRadius: '6px', fontWeight: '700', fontSize: '0.85rem' }}>Mark: {a.mark || 'Pending'}</span>
+                    </div>
+                    <p style={{ color: '#64748B', fontStyle: 'italic', marginTop: '0.5rem', fontSize: '0.95rem' }}>"{a.teacher_comment}"</p>
+                  </div>
+                ))}
+                {assignments.length === 0 && <p style={{ padding: '2rem', textAlign: 'center', color: '#64748B' }}>No grades posted yet.</p>}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'chat' && (
+            <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 150px)' }}>
+              <h2 style={{ fontSize: '1.8rem', fontWeight: '800', color: '#0F172A', marginBottom: '1.5rem' }}>Messages with Tutor</h2>
+              <div style={{ flex: 1, background: 'white', borderRadius: '20px', border: '1px solid #E2E8F0', padding: '1.5rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                {messages.map(m => (
+                  <div key={m.id} style={{ alignSelf: m.sender_role === 'parent' ? 'flex-end' : 'flex-start', maxWidth: '75%' }}>
+                    <p style={{ fontSize: '0.75rem', color: '#64748B', marginBottom: '0.2rem', textAlign: m.sender_role === 'parent' ? 'right' : 'left' }}>{m.sender_name}</p>
+                    <div style={{ background: m.sender_role === 'parent' ? '#1E3A8A' : '#F1F5F9', color: m.sender_role === 'parent' ? 'white' : '#0F172A', padding: '0.8rem 1rem', borderRadius: '12px' }}>
+                      <p>{m.text_content}</p>
+                    </div>
+                  </div>
+                ))}
+                {messages.length === 0 && <p style={{ textAlign: 'center', color: '#64748B', marginTop: '2rem' }}>No messages yet. Say hello to your child's tutor!</p>}
+                <div ref={messagesEndRef} />
+              </div>
+              <form onSubmit={handleSendMessage} style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
+                <input type="text" value={newMessage} onChange={e => setNewMessage(e.target.value)} placeholder="Type a message..." style={{ flex: 1, padding: '1rem', borderRadius: '12px', border: '1px solid #E2E8F0', outline: 'none' }} />
+                <button type="submit" style={{ background: '#1E3A8A', color: 'white', padding: '0 2rem', borderRadius: '12px', border: 'none', fontWeight: '700', cursor: 'pointer' }}>Send</button>
+              </form>
+            </div>
+          )}
+
+        </div>
+      </main>
     </div>
   );
 }
