@@ -9,6 +9,11 @@ export default function TutorDashboard() {
   const [loading, setLoading] = useState(true);
   const [tutor, setTutor] = useState(null);
   const [students, setStudents] = useState([]);
+  
+  // Change Password State
+  const [newPassword, setNewPassword] = useState('');
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [passwordMessage, setPasswordMessage] = useState('');
 
   useEffect(() => {
     fetchData();
@@ -18,19 +23,28 @@ export default function TutorDashboard() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { router.push('/login'); return; }
 
-    // Fetch Tutor Profile
     const { data: tutorData } = await supabase.from('tutors').select('*').eq('id', user.id).single();
     if (tutorData) setTutor(tutorData);
 
-    // Fetch Students assigned to this tutor
-    const { data: studentData } = await supabase
-      .from('students')
-      .select('*, parents(name)')
-      .eq('tutor_id', user.id)
-      .order('created_at', { ascending: false });
-    
+    const { data: studentData } = await supabase.from('students').select('*, parents(name)').eq('tutor_id', user.id).order('created_at', { ascending: false });
     if (studentData) setStudents(studentData);
+    
     setLoading(false);
+  };
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    setPasswordMessage('Updating...');
+    
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    
+    if (error) {
+      setPasswordMessage('Error: ' + error.message);
+    } else {
+      setPasswordMessage('Password updated successfully!');
+      setNewPassword('');
+      setTimeout(() => setShowPasswordForm(false), 2000);
+    }
   };
 
   const handleLogout = async () => {
@@ -55,37 +69,44 @@ export default function TutorDashboard() {
           <a href="#" style={{ display: 'flex', alignItems: 'center', padding: '0.75rem 1rem', color: '#94A3B8', textDecoration: 'none' }}>My Students</a>
           <a href="#" style={{ display: 'flex', alignItems: 'center', padding: '0.75rem 1rem', color: '#94A3B8', textDecoration: 'none' }}>Lessons</a>
           <a href="#" style={{ display: 'flex', alignItems: 'center', padding: '0.75rem 1rem', color: '#94A3B8', textDecoration: 'none' }}>Schedule</a>
-          <a href="#" style={{ display: 'flex', alignItems: 'center', padding: '0.75rem 1rem', color: '#94A3B8', textDecoration: 'none' }}>Assessments</a>
         </nav>
 
+        <button onClick={() => setShowPasswordForm(!showPasswordForm)} style={{ background: 'transparent', border: '1px solid #334155', color: '#3B82F6', textAlign: 'center', padding: '0.75rem', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', marginBottom: '1rem' }}>
+          Change Password
+        </button>
         <button onClick={handleLogout} style={{ background: 'transparent', border: 'none', color: '#EF4444', textAlign: 'left', padding: '1rem', fontWeight: 'bold', cursor: 'pointer' }}>Log Out</button>
       </div>
 
       {/* MAIN CONTENT */}
       <div style={{ flex: 1, padding: '2rem', overflowY: 'auto' }}>
         
+        {/* CHANGE PASSWORD MODAL/FORM */}
+        {showPasswordForm && (
+          <div style={{ background: '#1E293B', padding: '1.5rem', borderRadius: '16px', border: '1px solid #334155', marginBottom: '2rem' }}>
+            <h2 style={{ fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '1rem', color: '#3B82F6' }}>Update Your Password</h2>
+            {passwordMessage && <p style={{ marginBottom: '1rem', color: passwordMessage.includes('Error') ? '#EF4444' : '#10B981' }}>{passwordMessage}</p>}
+            <form onSubmit={handleChangePassword} style={{ display: 'flex', gap: '1rem' }}>
+              <input type="password" placeholder="New Password" required minLength="6" value={newPassword} onChange={e => setNewPassword(e.target.value)} style={{ flex: 1, padding: '0.8rem', borderRadius: '8px', border: '1px solid #334155', background: '#0F172A', color: 'white' }} />
+              <button type="submit" style={{ background: '#3B82F6', color: 'white', padding: '0.8rem 1.5rem', borderRadius: '8px', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>Update Password</button>
+            </form>
+          </div>
+        )}
+
         {/* TOP HEADER */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-          <div style={{ background: '#1E293B', padding: '0.5rem 1rem', borderRadius: '8px', width: '300px', color: '#94A3B8' }}>
-            Search...
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <span style={{ color: '#94A3B8' }}>EN</span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#1E293B', padding: '0.5rem 1rem', borderRadius: '8px' }}>
-              <span style={{ fontSize: '0.9rem', fontWeight: 'bold' }}>{tutor?.name}</span>
-            </div>
+          <div style={{ background: '#1E293B', padding: '0.5rem 1rem', borderRadius: '8px', width: '300px', color: '#94A3B8' }}>Search...</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#1E293B', padding: '0.5rem 1rem', borderRadius: '8px' }}>
+            <span style={{ fontSize: '0.9rem', fontWeight: 'bold' }}>{tutor?.name}</span>
           </div>
         </div>
 
         {/* HERO GREETING */}
-        <div style={{ background: 'linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%)', padding: '2rem', borderRadius: '16px', marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <h1 style={{ fontSize: '1.8rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>Hello {tutor?.name.split(' ')[0]}!</h1>
-            <p style={{ color: '#E2E8F0' }}>You have {students.length} students assigned to you. Let's build something great today.</p>
-          </div>
+        <div style={{ background: 'linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%)', padding: '2rem', borderRadius: '16px', marginBottom: '2rem' }}>
+          <h1 style={{ fontSize: '1.8rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>Hello {tutor?.name.split(' ')[0]}!</h1>
+          <p style={{ color: '#E2E8F0' }}>You have {students.length} students assigned to you. Let's build something great today.</p>
         </div>
 
-        {/* STATS GRID */}
+        {/* STATS */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
           <div style={{ background: '#1E293B', padding: '1.5rem', borderRadius: '16px', border: '1px solid #334155' }}>
             <p style={{ color: '#94A3B8', fontSize: '0.9rem', marginBottom: '0.5rem' }}>My Students</p>
@@ -94,10 +115,6 @@ export default function TutorDashboard() {
           <div style={{ background: '#1E293B', padding: '1.5rem', borderRadius: '16px', border: '1px solid #334155' }}>
             <p style={{ color: '#94A3B8', fontSize: '0.9rem', marginBottom: '0.5rem' }}>Classes Today</p>
             <h2 style={{ fontSize: '2rem', fontWeight: 'bold', color: '#10B981' }}>0</h2>
-          </div>
-          <div style={{ background: '#1E293B', padding: '1.5rem', borderRadius: '16px', border: '1px solid #334155' }}>
-            <p style={{ color: '#94A3B8', fontSize: '0.9rem', marginBottom: '0.5rem' }}>Pending Grading</p>
-            <h2 style={{ fontSize: '2rem', fontWeight: 'bold', color: '#F59E0B' }}>0</h2>
           </div>
         </div>
 
@@ -112,9 +129,7 @@ export default function TutorDashboard() {
               {students.map(student => (
                 <div key={student.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#0F172A', padding: '1rem', borderRadius: '12px', border: '1px solid #334155' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <div style={{ width: '40px', height: '40px', background: '#3B82F6', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
-                      {student.name.charAt(0)}
-                    </div>
+                    <div style={{ width: '40px', height: '40px', background: '#3B82F6', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>{student.name.charAt(0)}</div>
                     <div>
                       <p style={{ fontWeight: 'bold' }}>{student.name}</p>
                       <p style={{ fontSize: '0.8rem', color: '#94A3B8' }}>{student.student_id_code} | Age: {student.age}</p>
@@ -124,14 +139,12 @@ export default function TutorDashboard() {
                     <span style={{ padding: '0.3rem 0.8rem', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 'bold', background: student.status === 'APPROVED' ? 'rgba(16,185,129,0.2)' : 'rgba(245,158,11,0.2)', color: student.status === 'APPROVED' ? '#10B981' : '#F59E0B' }}>
                       {student.status}
                     </span>
-                    <button style={{ background: '#3B82F6', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>View</button>
                   </div>
                 </div>
               ))}
             </div>
           )}
         </div>
-
       </div>
     </div>
   );
